@@ -1,0 +1,68 @@
+name: Release
+on:
+  push:
+    tags:
+      - "*.*.*"
+      - '*.*.*-beta-*'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  Build:
+    name: Build release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.9
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip pyinstaller
+          pip install -r requirements.txt
+
+      - name: Build with pyinstaller
+        run: pyinstaller --hidden-import zeroconf._utils.ipaddress --hidden-import zeroconf._handlers.answers --hidden-import=clr --add-data "./img/logo.png;img" --onefile --distpath ./build --name=vrc-vrphone main.py
+
+      - name: Deploy EXE
+        uses: actions/upload-artifact@v3
+        with:
+          name: vrphone
+          path: ./build/vrc-vrphone.exe
+          if-no-files-found: error
+
+
+  release:
+    needs: build
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: vrc-vrphone
+          path: artifact/vrc-vrphone
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: VRC_VRPhone
+          path: artifact/VRC_VRPhone
+      
+      - name: Display structure of downloaded files
+        run: ls -R
+        working-directory: artifact
+
+      - uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            artifact/vrc-vrphone/vrc-vrphone.exe
