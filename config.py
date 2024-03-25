@@ -24,11 +24,13 @@ class Config:
             "use_oscquery": True,
             "server_port": 9001,
             "microsip_binary": microsip_binary,
-            "call_menu_number": "**1",
             "call_autoanswer": False,
-            "interactions": {
-                params.call_answer: True,
-                params.call_start: True,
+            "interaction_timeout": 2.0,
+            "phonebook": {
+                "Lobby": "**1",
+                "First Floor": "**2",
+                "Support": "**3",
+                "Memes": "**4"
             }
         }
         self.current_config = None
