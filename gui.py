@@ -129,31 +129,18 @@ class Gui:
 
     def handle_phonebook_change(self, sender, app_data):
         updated_element = self.ids_to_elements.get(sender)
-        print("Debug sender: {}".format(sender))
-        print("Debug updated_element: {}".format(updated_element))
         new_data = app_data
-        #old_data = 
-        #phonebook_map = self.phonebook_element_to_config_key.get("phonebook")
-        #for p, (name, number) in enumerate(self.config.get_by_key("phonebook").items()):
-        phonebook: dict[str, str] = self.config.get_by_key("phonebook")
-        print("Debug phonebook: {}".format(phonebook))
-        #for element in self.phonebook_elements:
-
+        phonebook = self.config.get_by_key("phonebook")
         for i, element_group in enumerate(self.phonebook_elements):
             row = i
             for e, element in enumerate(element_group):
                 column = e
                 if element == updated_element:
-                    for p, (name, number) in enumerate(phonebook.items()):
+                    for p, (name, number) in enumerate(phonebook):
                         if p == row:
-                            print("Debug name: {}".format(name))
-                            print("Debug number: {}".format(number))
+                            phonebook[row][column] = new_data
+                            self.config.update("phonebook", phonebook)
                             return
-                            #p,  = phonebook_map.get(element)
-                            #phonebook = self.config.get_by_key("phonebook")
-                            #phonebook[config_key] = app_data
-                            #self.config.update("phonebook", phonebook)
-                        #return
 
     def handle_contribute_callback(self, sender, app_data):
         webbrowser.open("https://vrchat.com/home/user/usr_6a5183a0-c41a-4ef7-b69a-8ab5770fc97b")
@@ -210,7 +197,7 @@ class Gui:
             dpg.add_table_column(label="Number")
             for g, element_group in enumerate(self.phonebook_elements):
                 with dpg.table_row():
-                    for p, (name, number) in enumerate(self.config.get_by_key("phonebook").items()):
+                    for p, (name, number) in enumerate(self.config.get_by_key("phonebook")):
                         if g == p:
                             for e, element in enumerate(element_group):
                                 if e == 0:

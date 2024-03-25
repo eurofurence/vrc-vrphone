@@ -39,7 +39,7 @@ class VRPhone:
 
     def handle_phonebook_entry(self, entry):
         if not self.call_active:
-            for p, (name, number) in enumerate(self.config.get_by_key("phonebook").items()):
+            for p, (name, number) in enumerate(self.config.get_by_key("phonebook")):
                 if p == entry:
                     self.gui.print_terminal(
                             "Call phone book entry #{} {} {}".format(p, name, number)
