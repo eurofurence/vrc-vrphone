@@ -11,11 +11,11 @@ class MicroSIPCallbackAPI():
         self.gui = gui
         self.app = Flask(__name__)
         self.api = Api(self.app)
-        self.osc_output_parameters: dict[str, str] = {
-            params.call_started: 1,
-            params.call_ended: 1,
-            params.call_incoming: 1,
-            params.call_answered_incoming: 1,
+        self.osc_output_parameters: dict[str, tuple] = {
+            params.call_started: ("started", None),
+            params.call_ended: ("ended", 1),
+            params.call_incoming: ("incoming", 2),
+            params.call_answered_incoming: ("answered", 3)
         }
         self.api.add_resource(ReceiveCallback, '/<string:command>/<string:caller_id>')
 
