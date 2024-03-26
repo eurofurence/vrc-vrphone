@@ -14,16 +14,16 @@ class VRPhone:
         self.call_active = False
         self.is_paused = False
         self.osc_input_parameters: dict[str, tuple] = {
-            params.call_answer_button: ("answerbutton", None),
-            params.phonebook_entry_1_button: ("phonebook", 1),
-            params.phonebook_entry_2_button: ("phonebook", 2),
-            params.phonebook_entry_3_button: ("phonebook", 3),
-            params.phonebook_entry_4_button: ("phonebook", 4)
+            params.receiver_button: ("receiver", None),
+            params.phonebook_entry_1_button: ("phonebook", 0),
+            params.phonebook_entry_2_button: ("phonebook", 1),
+            params.phonebook_entry_3_button: ("phonebook", 2),
+            params.phonebook_entry_4_button: ("phonebook", 3)
         }
         self.parameters_to_types: dict[str, tuple] = {
             value: key for key, value in self.osc_input_parameters.items()}
 
-    def handle_answer_button(self):
+    def handle_receiver_button(self):
         if self.call_active:
             self.gui.print_terminal(
                 "Call hangup"
@@ -44,6 +44,7 @@ class VRPhone:
                     self.gui.print_terminal(
                             "Call phone book entry #{} {} {}".format(p, name, number)
                     )
+                    self.call_active = True
                     return self.execute_microsip_command(number)
         else:
             self.gui.print_terminal(
@@ -61,8 +62,7 @@ class VRPhone:
 
     def execute_microsip_command(self, parameter: str):
         microsip_binary = self.config.get_by_key("microsip_binary")
-        #command = subprocess.run([microsip_binary, parameter])
-        command = True
+        command = subprocess.run([microsip_binary, parameter])
         return command
 
     def watch(self) -> None:
@@ -74,7 +74,7 @@ class VRPhone:
                     for interaction in self.active_interactions:
                         interaction_type = self.osc_input_parameters.get(interaction)[0]
                         interaction_args = self.osc_input_parameters.get(interaction)[1]
-                        if interaction_type == "answerbutton" or interaction_type == "button":
+                        if interaction_type == "receiver" or interaction_type == "button":
                             self.gui.handle_active_button_update(
                                 parameter=interaction)
                         commands.append((interaction, interaction_type, interaction_args))
@@ -84,8 +84,8 @@ class VRPhone:
                             interaction_type = command[1]
                             interaction_args = command[2]
                             match interaction_type:
-                                case "answerbutton":
-                                    self.handle_answer_button()                               
+                                case "receiver":
+                                    self.handle_receiver_button()                               
                                 case "phonebook":
                                     self.handle_phonebook_entry(interaction_args)
                                 case _:

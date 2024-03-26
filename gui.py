@@ -18,7 +18,7 @@ class Element(Enum):
     PHONEBOOK_ENTRY_2_NUMBER = auto()
     PHONEBOOK_ENTRY_3_NUMBER = auto()
     PHONEBOOK_ENTRY_4_NUMBER = auto()
-    CALL_ANSWER_BUTTON = auto()
+    RECEIVER_BUTTON = auto()
     CALL_STARTED = auto()
     CALL_ENDED = auto()
     CALL_INCOMING = auto()
@@ -47,7 +47,7 @@ class Gui:
             Element.MICROSIP_BINARY: None,
             Element.CALL_AUTOANSWER: None,
             Element.PHONEBOOK: None,
-            Element.CALL_ANSWER_BUTTON: None,
+            Element.RECEIVER_BUTTON: None,
             Element.CALL_STARTED: None,
             Element.CALL_ENDED: None,
             Element.CALL_INCOMING: None,
@@ -68,7 +68,7 @@ class Gui:
             Element.CALL_AUTOANSWER: "call_autoanswer",
             Element.INTERACTION_TIMEOUT: "interaction_timeout",
             "buttons": {
-                Element.CALL_ANSWER_BUTTON: params.call_answer_button,
+                Element.RECEIVER_BUTTON: params.receiver_button,
             }
         }
         self.phonebook_elements = [
@@ -81,7 +81,7 @@ class Gui:
             value: key for key, value in self.element_to_config_key.get('buttons').items()
         }
         self.button_labels: dict[Element, str] = {
-            Element.CALL_ANSWER_BUTTON: "Call Answer Button",
+            Element.RECEIVER_BUTTON: "Receiver Button",
         }
         self.ids_to_elements = None
 
