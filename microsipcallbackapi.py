@@ -21,8 +21,11 @@ class MicroSIPCallbackAPI():
 
 class ReceiveCallback(Resource):
     def get(self, command, caller_id):
-        return {: todos[todo_id]}
+        return
+        #todo
+        #return {: todos[todo_id]}
 
     def put(self, command, caller_id):
-        todos[todo_id] = request.form['data']
-        return {todo_id: todos[todo_id]}
+        return
+        #todo
+        #return {todo_id: todos[todo_id]}
