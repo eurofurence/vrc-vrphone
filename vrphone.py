@@ -11,15 +11,45 @@ class VRPhone:
         self.config = config
         self.gui = gui
         self.active_interactions: set = set()
-        self.osc_parameters: dict[str, str] = {
-            params.call_answer: "/answer",
-            params.call_start: self.config.get_by_key("call_menu_number"),
-        }
-        # start, duration, parameters
-        self.active_hit: None | tuple[float, float, list[self.osc_parameters]] = None
-        self.interactions_to_parameters: dict[str, str] = {
-            value: key for key, value in self.osc_parameters.items()}
+        self.call_active = False
         self.is_paused = False
+        self.osc_input_parameters: dict[str, tuple] = {
+            params.receiver_button: ("receiver", None),
+            params.phonebook_entry_1_button: ("phonebook", 0),
+            params.phonebook_entry_2_button: ("phonebook", 1),
+            params.phonebook_entry_3_button: ("phonebook", 2),
+            params.phonebook_entry_4_button: ("phonebook", 3)
+        }
+        self.parameters_to_types: dict[str, tuple] = {
+            value: key for key, value in self.osc_input_parameters.items()}
+
+    def handle_receiver_button(self):
+        if self.call_active:
+            self.gui.print_terminal(
+                "Call hangup"
+            )
+            command = "/hangupall"
+        else:
+            self.gui.print_terminal(
+                "Call answered"
+            )
+            command = "/answer"
+        self.call_active = not self.call_active
+        return self.execute_microsip_command(command)
+
+    def handle_phonebook_entry(self, entry):
+        if not self.call_active:
+            for p, (name, number) in enumerate(self.config.get_by_key("phonebook")):
+                if p == entry:
+                    self.gui.print_terminal(
+                            "Call phone book entry #{} {} {}".format(p, name, number)
+                    )
+                    self.call_active = True
+                    return self.execute_microsip_command(number)
+        else:
+            self.gui.print_terminal(
+                    "Call already active, ignoring phone book button action"
+            )
 
     def toggle_interactions(self):
         self.is_paused = not self.is_paused
@@ -38,43 +68,44 @@ class VRPhone:
     def watch(self) -> None:
         while True:
             try:
-                self.gui.handle_active_interaction_reset()
-
-                if self.active_hit:
-                    if ((self.active_hit[0] + self.active_hit[1]) < time.time()):
-                        self.active_hit = None
-                    else:
-                        time.sleep(.05)
-                        continue
-
+                self.gui.handle_active_button_reset()
                 if len(self.active_interactions) > 0 and not self.is_paused:
-                    interactions = []
+                    commands = []
                     for interaction in self.active_interactions:
-                        parameter = self.interactions_to_parameters.get(interaction)
-                        self.gui.handle_active_interaction_update(
-                            parameter=parameter)
-                        interactions.append(interaction)
-                    if len(interactions) > 0:
-                        self.gui.print_terminal(
-                            "Running Microsip Command: {}".format(interaction))
-                        self.execute_microsip_command(interaction)
-
+                        interaction_type = self.osc_input_parameters.get(interaction)[0]
+                        interaction_args = self.osc_input_parameters.get(interaction)[1]
+                        if interaction_type == "receiver" or interaction_type == "button":
+                            self.gui.handle_active_button_update(
+                                parameter=interaction)
+                        commands.append((interaction, interaction_type, interaction_args))
+                    if len(commands) > 0:
+                        for command in commands:
+                            interaction = command[0]
+                            interaction_type = command[1]
+                            interaction_args = command[2]
+                            match interaction_type:
+                                case "receiver":
+                                    self.handle_receiver_button()                               
+                                case "phonebook":
+                                    self.handle_phonebook_entry(interaction_args)
+                                case _:
+                                    self.gui.print_terminal("Unknown type?")
+                            time.sleep(self.config.get_by_key("interaction_timeout"))
             except RuntimeError:  # race condition for set changing during iteration
                 pass
             time.sleep(.05)
 
     def on_collission_enter(self, address: str, *args) -> None:
-        if address in self.osc_parameters:
+        if address in self.osc_input_parameters:
             if len(args) != 1:
                 return
             was_entered: bool = args[0]
             if type(was_entered) != bool:
                 return
-            interaction = self.osc_parameters.get(address)
             if was_entered:
-                self.active_interactions.add(interaction)
+                self.active_interactions.add(address)
             else:
-                self.active_interactions.discard(interaction)
+                self.active_interactions.discard(address)
 
     def map_parameters(self, dispatcher: dispatcher.Dispatcher) -> None:
         dispatcher.set_default_handler(self.on_collission_enter)

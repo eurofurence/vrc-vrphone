@@ -1,2 +1,10 @@
-call_answer = "/avatar/parameters/vrphone_call_answer"
-call_start = "/avatar/parameters/vrphone_call_start"
+receiver_button = "/avatar/parameters/vrphone_receiver_button"
+phonebook_entry_1_button = "/avatar/parameters/vrphone_phonebook_entry_1_button"
+phonebook_entry_2_button = "/avatar/parameters/vrphone_phonebook_entry_2_button"
+phonebook_entry_3_button = "/avatar/parameters/vrphone_phonebook_entry_3_button"
+phonebook_entry_4_button = "/avatar/parameters/vrphone_phonebook_entry_4_button"
+#Outputs to use as indicators & for logic
+call_started = "/avatar/parameters/vrphone_call_started"
+call_ended = "/avatar/parameters/vrphone_call_ended"
+call_incoming = "/avatar/parameters/vrphone_call_incoming"
+call_answered_incoming = "/avatar/parameters/vrphone_answered_incoming"

@@ -1,4 +1,5 @@
 python-osc==1.8.0
 pythonnet==3.0.1
 dearpygui==1.10.0
+flask-restful==0.3.10
 git+https://github.com/cyberkitsune/tinyoscquery.git@0.1.2#egg=tinyoscquery

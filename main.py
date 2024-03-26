@@ -40,6 +40,7 @@ try:
 
     osc_server = ThreadingOSCUDPServer(
         ("127.0.0.1", server_udp_port), dispatcher, asyncio.new_event_loop())
+    gui.print_terminal("OSC server started on port: {}".format(server_udp_port))
     threading.Thread(target=lambda: osc_server.serve_forever(2),
                      daemon=True).start()
     threading.Thread(target=vrphone.watch,

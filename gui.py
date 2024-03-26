@@ -8,20 +8,30 @@ from enum import Enum, auto
 
 class Element(Enum):
     MICROSIP_BINARY = auto()
-    CALL_MENU_NUMBER = auto()
     CALL_AUTOANSWER = auto()
-    DETECT_IP_ADDRESS_CHECKBOX = auto()
+    PHONEBOOK = auto()
+    PHONEBOOK_ENTRY_1_NAME = auto()
+    PHONEBOOK_ENTRY_2_NAME = auto()
+    PHONEBOOK_ENTRY_3_NAME = auto()
+    PHONEBOOK_ENTRY_4_NAME = auto()
+    PHONEBOOK_ENTRY_1_NUMBER = auto()
+    PHONEBOOK_ENTRY_2_NUMBER = auto()
+    PHONEBOOK_ENTRY_3_NUMBER = auto()
+    PHONEBOOK_ENTRY_4_NUMBER = auto()
+    RECEIVER_BUTTON = auto()
+    CALL_STARTED = auto()
+    CALL_ENDED = auto()
+    CALL_INCOMING = auto()
+    CALL_ANSWERED_INCOMING = auto()
+    INTERACTION_TIMEOUT = auto()
     USE_OSCQUERY_CHECKBOX = auto()
     SERVER_PORT_NUMBER_INPUT = auto()
-    CALL_ANSWER = auto()
-    CALL_START = auto()
     TERMINAL_WINDOW_INPUT = auto()
     SAVE_SETTINGS_BUTTON = auto()
     CLEAR_CONSOLE_BUTTON = auto()
     TOGGLES_INTERACTIONS_BUTTON = auto()
     CONNECT_ON_STARTUP_CHECKBOX = auto()
     CONTRIBUTE_BUTTON = auto()
-
 
 class Gui:
     def __init__(self, config: config.Config, window_width: int, window_height: int, logo_path: str):
@@ -30,16 +40,19 @@ class Gui:
         self.window_width = window_width
         self.window_height = window_height
         self.logo_path = logo_path
-        self.on_connect_clicked = Event()
         self.on_save_settings_clicked = Event()
         self.on_clear_console_clicked = Event()
         self.on_toggle_interaction_clicked = Event()
         self.elements = {
             Element.MICROSIP_BINARY: None,
-            Element.CALL_MENU_NUMBER: None,
             Element.CALL_AUTOANSWER: None,
-            Element.CALL_ANSWER: None,
-            Element.CALL_START: None,
+            Element.PHONEBOOK: None,
+            Element.RECEIVER_BUTTON: None,
+            Element.CALL_STARTED: None,
+            Element.CALL_ENDED: None,
+            Element.CALL_INCOMING: None,
+            Element.CALL_ANSWERED_INCOMING: None,
+            Element.INTERACTION_TIMEOUT: None,
             Element.USE_OSCQUERY_CHECKBOX: None,
             Element.SERVER_PORT_NUMBER_INPUT: None,
             Element.TERMINAL_WINDOW_INPUT: None,
@@ -52,24 +65,25 @@ class Gui:
             Element.USE_OSCQUERY_CHECKBOX: "use_oscquery",
             Element.SERVER_PORT_NUMBER_INPUT: "server_port",
             Element.MICROSIP_BINARY: "microsip_binary",
-            Element.CALL_MENU_NUMBER: "call_menu_number",
             Element.CALL_AUTOANSWER: "call_autoanswer",
-            "interactions": {
-                Element.CALL_ANSWER: params.call_answer,
-                Element.CALL_START: params.call_start,
+            Element.INTERACTION_TIMEOUT: "interaction_timeout",
+            "buttons": {
+                Element.RECEIVER_BUTTON: params.receiver_button,
             }
         }
-        self.parameter_to_interaction_element = {
-            value: key for key, value in self.element_to_config_key.get('interactions').items()
+        self.phonebook_elements = [
+                {Element.PHONEBOOK_ENTRY_1_NAME: None, Element.PHONEBOOK_ENTRY_1_NUMBER: None},
+                {Element.PHONEBOOK_ENTRY_2_NAME: None, Element.PHONEBOOK_ENTRY_2_NUMBER: None},
+                {Element.PHONEBOOK_ENTRY_3_NAME: None, Element.PHONEBOOK_ENTRY_3_NUMBER: None},
+                {Element.PHONEBOOK_ENTRY_4_NAME: None, Element.PHONEBOOK_ENTRY_4_NUMBER: None},
+        ]
+        self.parameter_to_button_element: dict[Element, str] = {
+            value: key for key, value in self.element_to_config_key.get('buttons').items()
         }
-        self.element_labels = {
-            Element.CALL_ANSWER: "Call Answer Button",
-            Element.CALL_START: "Call Start Button",
+        self.button_labels: dict[Element, str] = {
+            Element.RECEIVER_BUTTON: "Receiver Button",
         }
         self.ids_to_elements = None
-
-    def handle_connect_callback(self, sender, app_data):
-        self.on_connect_clicked.dispatch(sender, app_data)
 
     def handle_save_settings_callback(self):
         self.config.write_config_to_disk()
@@ -78,20 +92,20 @@ class Gui:
     def handle_clear_console_callback(self, sender, app_data):
         self.on_clear_console_clicked.dispatch(sender, app_data)
 
-    def handle_active_interaction_update(self, parameter):
-        element_name = self.parameter_to_interaction_element.get(parameter)
+    def handle_active_button_update(self, parameter):
+        element_name = self.parameter_to_button_element.get(parameter)
         element_id = self.elements[element_name]
-        existing_element_label = self.element_labels[element_name]
+        existing_element_label = self.button_labels[element_name]
         result = "[" + existing_element_label + "]"
         if element_id is not None:
             dpg.configure_item(
                 element_id, label=result
             )
 
-    def handle_active_interaction_reset(self):
-        for element_name in self.parameter_to_interaction_element.values():
+    def handle_active_button_reset(self):
+        for element_name in self.parameter_to_button_element.values():
             element_id = self.elements[element_name]
-            label = self.element_labels[element_name]
+            label = self.button_labels[element_name]
             if element_id is not None:
                 dpg.configure_item(
                     element_id, label=label
@@ -105,13 +119,28 @@ class Gui:
         config_key = self.element_to_config_key.get(element)
         # this implies its an intensity
         if config_key is None:
-            interactions_map = self.element_to_config_key.get("interactions")
-            config_key = interactions_map.get(element)
-            interactions = self.config.get_by_key("interactions")
-            interactions[config_key] = app_data
-            self.config.update("interactions", interactions)
+            buttons_map = self.element_to_config_key.get("buttons")
+            config_key = buttons_map.get(element)
+            buttons = self.config.get_by_key("buttons")
+            buttons[config_key] = app_data
+            self.config.update("buttons", buttons)
             return
         self.config.update(config_key, app_data)
+
+    def handle_phonebook_change(self, sender, app_data):
+        updated_element = self.ids_to_elements.get(sender)
+        new_data = app_data
+        phonebook = self.config.get_by_key("phonebook")
+        for i, element_group in enumerate(self.phonebook_elements):
+            row = i
+            for e, element in enumerate(element_group):
+                column = e
+                if element == updated_element:
+                    for p, (name, number) in enumerate(phonebook):
+                        if p == row:
+                            phonebook[row][column] = new_data
+                            self.config.update("phonebook", phonebook)
+                            return
 
     def handle_contribute_callback(self, sender, app_data):
         webbrowser.open("https://vrchat.com/home/user/usr_6a5183a0-c41a-4ef7-b69a-8ab5770fc97b")
@@ -151,16 +180,33 @@ class Gui:
 
     def create_microsip_binary_input(self):
         microsip_binary = self.config.get_by_key("microsip_binary") or ""
-        dpg.add_text("VR Phone Microsip Application Binary")
+        dpg.add_text("Microsip Application Binary")
         self.elements[Element.MICROSIP_BINARY] = dpg.add_input_text(default_value=microsip_binary,
                                                                      width=-1, callback=self.handle_input_change)
-
-    def create_call_menu_number_input(self):
-        call_menu_number = self.config.get_by_key("call_menu_number") or ""
-        dpg.add_text("VR Phone Call Menu Number")
-        self.elements[Element.CALL_MENU_NUMBER] = dpg.add_input_text(default_value=call_menu_number,
+    def create_interaction_timeout_input(self):
+        interaction_timeout = float(self.config.get_by_key("interaction_timeout")) or float(0)
+        dpg.add_text("Interaction timeout")
+        self.elements[Element.INTERACTION_TIMEOUT] = dpg.add_input_float(default_value=interaction_timeout,
                                                                      width=-1, callback=self.handle_input_change)
-
+    def create_phonebook(self):
+        dpg.add_text("Phonebook")
+        with dpg.table(header_row=True, row_background=True,
+                    borders_innerH=True, borders_outerH=True, borders_innerV=True,
+                    borders_outerV=True) as table:
+            dpg.add_table_column(label="Name")
+            dpg.add_table_column(label="Number")
+            for g, element_group in enumerate(self.phonebook_elements):
+                with dpg.table_row():
+                    for p, (name, number) in enumerate(self.config.get_by_key("phonebook")):
+                        if g == p:
+                            for e, element in enumerate(element_group):
+                                if e == 0:
+                                    default_value = name
+                                else:
+                                    default_value = number
+                                self.elements[element] = dpg.add_input_text(default_value=default_value, width=-1, callback=self.handle_phonebook_change)
+            self.elements[Element.PHONEBOOK] = table
+            
     def create_call_autoanswer_checkbox(self):
         call_autoanswer = self.config.get_by_key("call_autoanswer")
         self.elements[Element.CALL_AUTOANSWER] = dpg.add_checkbox(
@@ -206,12 +252,15 @@ class Gui:
             handle_centered_image = self.create_centered_image(
                 "logo", self.logo_path)
             dpg.add_spacer(height=20)
-            self.create_call_menu_number_input()
             self.create_microsip_binary_input()
             self.create_call_autoanswer_checkbox()
             dpg.add_spacer(height=20)
             self.create_server_port_input()
             self.create_use_oscquery_checkbox()
+            dpg.add_spacer(height=20)
+            self.create_interaction_timeout_input()
+            dpg.add_spacer(height=20)
+            self.create_phonebook()
             dpg.add_spacer(height=20)
             self.create_logs_output()
             dpg.add_spacer(height=20)
