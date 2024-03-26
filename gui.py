@@ -132,13 +132,11 @@ class Gui:
         new_data = app_data
         phonebook = self.config.get_by_key("phonebook")
         for i, element_group in enumerate(self.phonebook_elements):
-            row = i
             for e, element in enumerate(element_group):
-                column = e
                 if element == updated_element:
                     for p, (name, number) in enumerate(phonebook):
-                        if p == row:
-                            phonebook[row][column] = new_data
+                        if p == i:
+                            phonebook[i][e] = new_data
                             self.config.update("phonebook", phonebook)
                             return
 

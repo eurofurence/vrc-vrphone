@@ -13,7 +13,7 @@ class VRPhone:
         self.active_interactions: set = set()
         self.call_active = False
         self.is_paused = False
-        self.osc_input_parameters: dict[str, tuple] = {
+        self.osc_bool_parameters: dict[str, tuple] = {
             params.receiver_button: ("receiver", None),
             params.phonebook_entry_1_button: ("phonebook", 0),
             params.phonebook_entry_2_button: ("phonebook", 1),
@@ -21,7 +21,7 @@ class VRPhone:
             params.phonebook_entry_4_button: ("phonebook", 3)
         }
         self.parameters_to_types: dict[str, tuple] = {
-            value: key for key, value in self.osc_input_parameters.items()}
+            value: key for key, value in self.osc_bool_parameters.items()}
 
     def handle_receiver_button(self):
         if self.call_active:
@@ -42,7 +42,7 @@ class VRPhone:
             for p, (name, number) in enumerate(self.config.get_by_key("phonebook")):
                 if p == entry:
                     self.gui.print_terminal(
-                            "Call phone book entry #{} {} {}".format(p, name, number)
+                            "Call phone book entry #{} {} {}".format(p+1, name, number)
                     )
                     self.call_active = True
                     return self.execute_microsip_command(number)
@@ -72,8 +72,8 @@ class VRPhone:
                 if len(self.active_interactions) > 0 and not self.is_paused:
                     commands = []
                     for interaction in self.active_interactions:
-                        interaction_type = self.osc_input_parameters.get(interaction)[0]
-                        interaction_args = self.osc_input_parameters.get(interaction)[1]
+                        interaction_type = self.osc_bool_parameters.get(interaction)[0]
+                        interaction_args = self.osc_bool_parameters.get(interaction)[1]
                         if interaction_type == "receiver" or interaction_type == "button":
                             self.gui.handle_active_button_update(
                                 parameter=interaction)
@@ -96,7 +96,7 @@ class VRPhone:
             time.sleep(.05)
 
     def on_collission_enter(self, address: str, *args) -> None:
-        if address in self.osc_input_parameters:
+        if address in self.osc_bool_parameters:
             if len(args) != 1:
                 return
             was_entered: bool = args[0]

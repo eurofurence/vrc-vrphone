@@ -22,10 +22,6 @@ if __name__ == "__main__":
 
   for x in range(2):
     print("Send #{}".format(str(x)))
-    client.send_message("/avatar/parameters/vrphone_receiver_button", True)
-    time.sleep(.05)
-    client.send_message("/avatar/parameters/vrphone_receiver_button", False)
-    time.sleep(2.5)
     client.send_message("/avatar/parameters/vrphone_phonebook_entry_1_button", True)
     time.sleep(.05)
     client.send_message("/avatar/parameters/vrphone_phonebook_entry_1_button", False)
