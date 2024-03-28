@@ -1,18 +1,18 @@
 import asyncio
 import logging
 import threading
+import os
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import ThreadingOSCUDPServer
 from pythonosc import udp_client
 from tinyoscquery.queryservice import OSCQueryService
 from tinyoscquery.utility import get_open_tcp_port, get_open_udp_port
-from vrphone import VRPhone
 from flask import Flask
-from flask_restful import reqparse, abort, Api, Resource
-
+from flask_restful import Api, Resource
+from vrphone import VRPhone
 from config import Config
 from gui import Gui
-import os
+
 
 class ReceiveCallback(Resource):
     def get(self, command, caller_id):

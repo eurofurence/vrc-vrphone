@@ -4,6 +4,7 @@ import webbrowser
 from event import Event
 import dearpygui.dearpygui as dpg
 from enum import Enum, auto
+from time import gmtime, strftime
 
 
 class Element(Enum):
@@ -166,8 +167,9 @@ class Gui:
 
     def print_terminal(self, text: str) -> None:
         value = dpg.get_value(self.elements[Element.TERMINAL_WINDOW_INPUT])
+        time = strftime("%d.%m %H:%M", gmtime())
         dpg.set_value(
-            self.elements[Element.TERMINAL_WINDOW_INPUT], text + '\n' + value)
+            self.elements[Element.TERMINAL_WINDOW_INPUT], '[' + time + '] ' + text + '\n'  + value)
 
     def on_clear_console(self, *args) -> None:
         dpg.set_value(
@@ -224,7 +226,7 @@ class Gui:
     def create_logs_output(self):
         dpg.add_text("Logs")
         self.elements[Element.TERMINAL_WINDOW_INPUT] = dpg.add_input_text(
-            multiline=True, readonly=True, height=90, width=-1)
+            multiline=True, readonly=True, height=200, width=-1)
 
     def create_button_group(self):
         with dpg.group(horizontal=True):
