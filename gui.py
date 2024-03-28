@@ -182,9 +182,9 @@ class Gui:
         self.elements[Element.MICROSIP_BINARY] = dpg.add_input_text(default_value=microsip_binary,
                                                                      width=-1, callback=self.handle_input_change)
     def create_interaction_timeout_input(self):
-        interaction_timeout = float(self.config.get_by_key("interaction_timeout")) or float(0)
+        interaction_timeout = self.config.get_by_key("interaction_timeout") or 2
         dpg.add_text("Interaction timeout")
-        self.elements[Element.INTERACTION_TIMEOUT] = dpg.add_input_float(default_value=interaction_timeout,
+        self.elements[Element.INTERACTION_TIMEOUT] = dpg.add_input_int(default_value=interaction_timeout,
                                                                      width=-1, callback=self.handle_input_change)
     def create_phonebook(self):
         dpg.add_text("Phonebook")
