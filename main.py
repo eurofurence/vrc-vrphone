@@ -9,6 +9,7 @@ from tinyoscquery.queryservice import OSCQueryService
 from tinyoscquery.utility import get_open_tcp_port, get_open_udp_port
 from flask import Flask
 from flask_restful import Api, Resource
+from waitress import serve
 from vrphone import VRPhone
 from config import Config
 from gui import Gui
@@ -30,7 +31,7 @@ def start_oscquery(server_udp_port, server_tcp_port):
     return start_server
 
 def start_callbackapi() -> None:
-    app.run(host='127.0.0.1', port=19001)
+    serve(app, host="127.0.0.1", port=19001)
     return
 
 gui = None
@@ -61,11 +62,11 @@ try:
         server_tcp_port = get_open_tcp_port()
         threading.Thread(target=start_oscquery(server_udp_port, server_tcp_port),
                          daemon=True).start()
-        gui.print_terminal("OSC query started\nAdvertising UDP Port: {} TCP Port: {} to VRC".format(server_udp_port, server_tcp_port))
+        gui.print_terminal("OSC query started, advertising ports UDP: {} TCP: {}".format(server_udp_port, server_tcp_port))
 
     osc_server = ThreadingOSCUDPServer(
         ("127.0.0.1", server_udp_port), dispatcher, asyncio.new_event_loop())
-    gui.print_terminal("OSC server started on port: {}".format(server_udp_port))
+    gui.print_terminal("OSC server starting on port: {}".format(server_udp_port))
 
     #Start OSC Thread
     threading.Thread(target=lambda: osc_server.serve_forever(2),

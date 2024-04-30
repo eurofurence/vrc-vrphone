@@ -87,6 +87,16 @@ class VRPhone:
         command = subprocess.run([microsip_binary, parameter])
         return command
 
+    def handle_parameter_update(self, parameter):
+        element_name = self.parameter_to_button_element.get(parameter)
+        element_id = self.elements[element_name]
+        existing_element_label = self.button_labels[element_name]
+        result = "[" + existing_element_label + "]"
+        if element_id is not None:
+            dpg.configure_item(
+                element_id, label=result
+            )
+
     def watch(self) -> None:
         while True:
             try:

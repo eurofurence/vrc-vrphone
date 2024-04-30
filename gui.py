@@ -193,8 +193,8 @@ class Gui:
         with dpg.table(header_row=True, row_background=True,
                     borders_innerH=True, borders_outerH=True, borders_innerV=True,
                     borders_outerV=True) as table:
-            dpg.add_table_column(label="Name")
-            dpg.add_table_column(label="Number")
+            dpg.add_table_column(label="Name", width=-1)
+            dpg.add_table_column(label="Number", width=-1)
             for g, element_group in enumerate(self.phonebook_elements):
                 with dpg.table_row():
                     for p, (name, number) in enumerate(self.config.get_by_key("phonebook")):
