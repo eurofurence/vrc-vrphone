@@ -11,7 +11,9 @@ class VRPhone:
         self.config = config
         self.gui = gui
         self.osc_client = osc_client
-        self.active_interactions: set = set()
+        self.interaction_queue: set = set()
+        self.callback_queue: set = set()
+        self.command_queue: set = set()
         self.call_started = False
         self.call_ended = False
         self.call_incoming = False
@@ -52,10 +54,12 @@ class VRPhone:
         return
     
     def call_pickup(self):
+        self.call_active = True
         command = self.execute_microsip_command("/answer")
         return command
     
     def call_hangup(self):
+        self.call_active = False
         command = self.execute_microsip_command("/hangupall")
         return command
 
@@ -87,44 +91,77 @@ class VRPhone:
         command = subprocess.run([microsip_binary, parameter])
         return command
 
-    def handle_parameter_update(self, parameter):
-        element_name = self.parameter_to_button_element.get(parameter)
-        element_id = self.elements[element_name]
-        existing_element_label = self.button_labels[element_name]
-        result = "[" + existing_element_label + "]"
-        if element_id is not None:
-            dpg.configure_item(
-                element_id, label=result
-            )
-
-    def watch(self) -> None:
+    # def handle_parameter_update(self, parameter):
+    #     element_name = self.parameter_to_button_element.get(parameter)
+    #     element_id = self.elements[element_name]
+    #     existing_element_label = self.button_labels[element_name]
+    #     result = "[" + existing_element_label + "]"
+    #     if element_id is not None:
+    #         dpg.configure_item(
+    #             element_id, label=result
+    #         )
+ 
+    def interaction_handler(self) -> None:
         while True:
             try:
                 self.gui.handle_active_button_reset()
-                if len(self.active_interactions) > 0 and not self.is_paused:
-                    commands = []
-                    for interaction in self.active_interactions:
+                #Build command queue from interactions
+                if len(self.interaction_queue) > 0 and not self.is_paused:
+                    for interaction in self.interaction_queue:
                         interaction_type = self.osc_bool_parameters.get(interaction)[0]
                         interaction_args = self.osc_bool_parameters.get(interaction)[1]
                         if interaction_type == "receiver" or interaction_type == "button":
                             self.gui.handle_active_button_update(
                                 parameter=interaction)
-                        commands.append((interaction, interaction_type, interaction_args))
-                    if len(commands) > 0:
-                        for command in commands:
-                            interaction = command[0]
-                            interaction_type = command[1]
-                            interaction_args = command[2]
-                            match interaction_type:
-                                case "receiver":
-                                    #Add more logic!
-                                    self.handle_receiver_button()
-                                case "phonebook":
-                                    self.handle_phonebook_entry(interaction_args)
-                                case _:
-                                    self.gui.print_terminal("Unknown type?")
-                            time.sleep(self.config.get_by_key("interaction_timeout"))
+                        self.command_queue.add((interaction, interaction_type, interaction_args))
+                        self.interaction_queue.discard(interaction)
             except RuntimeError:  # race condition for set changing during iteration
+                pass
+            time.sleep(.05)
+
+    def command_executor(self) -> None:
+        while True:
+            try:
+                #Run commands
+                if len(self.command_queue) > 0:
+                    for command in self.command_queue:
+                        interaction = command[0]
+                        interaction_type = command[1]
+                        interaction_args = command[2]
+                        match interaction_type:
+                            case "receiver":
+                                #Add more logic!
+                                self.handle_receiver_button()
+                            case "phonebook":
+                                self.handle_phonebook_entry(interaction_args)
+                            case _:
+                                self.gui.print_terminal("Unknown type?")
+                        self.command_queue.discard(command)
+                        time.sleep(self.config.get_by_key("interaction_timeout"))
+            except RuntimeError:
+                pass
+            time.sleep(.05)
+
+    def callback_handler(self) -> None:
+        while True:
+            try:
+                #Run commands
+                if len(self.command_queue) > 0:
+                    for command in self.command_queue:
+                        interaction = command[0]
+                        interaction_type = command[1]
+                        interaction_args = command[2]
+                        match interaction_type:
+                            case "receiver":
+                                #Add more logic!
+                                self.handle_receiver_button()
+                            case "phonebook":
+                                self.handle_phonebook_entry(interaction_args)
+                            case _:
+                                self.gui.print_terminal("Unknown type?")
+                        self.command_queue.discard(command)
+                        time.sleep(self.config.get_by_key("interaction_timeout"))
+            except RuntimeError:
                 pass
             time.sleep(.05)
 
@@ -135,12 +172,14 @@ class VRPhone:
             was_entered: bool = args[0]
             if type(was_entered) != bool:
                 return
-            if was_entered and address not in self.active_interactions:
-                self.active_interactions.add(address)
-            elif not was_entered and address in self.active_interactions:
-                self.active_interactions.discard(address)
+            if was_entered and address not in self.interaction_queue:
+                self.interaction_queue.add(address)
 
     def microsip_callback(self, microsip_cmd: str, caller_id: str) -> None:
+        # if microsip_cmd not in self.active_callbacks:
+        #     self.active_callbacks.add(microsip_cmd)
+        # elif microsip_cmd in self.active_callbacks:
+        #     self.active_callbacks
         match microsip_cmd:
             case "cmdCallStart":
                 self.call_started = True

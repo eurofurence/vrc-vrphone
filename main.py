@@ -71,8 +71,11 @@ try:
     #Start OSC Thread
     threading.Thread(target=lambda: osc_server.serve_forever(2),
                      daemon=True).start()
-    #Start VRPhone Thread
-    threading.Thread(target=vrphone.watch,
+    #Start VRC interaction handler Thread
+    threading.Thread(target=vrphone.interaction_handler,
+                     daemon=True).start()
+    #Start Microsip command executor Thread
+    threading.Thread(target=vrphone.command_executor,
                      daemon=True).start()
     #Start callback API
     threading.Thread(target=start_callbackapi,
