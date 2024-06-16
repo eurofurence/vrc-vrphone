@@ -214,14 +214,14 @@ class Gui:
 
     def create_server_port_input(self):
         server_port = self.config.get_by_key("server_port") or 9001
-        dpg.add_text("Server Port Number")
+        dpg.add_text("Server Port Number (Omitted if OSCQuery is used)")
         self.elements[Element.SERVER_PORT_NUMBER_INPUT] = dpg.add_input_int(default_value=server_port,
                                                                             width=-1, callback=self.handle_input_change)
 
     def create_use_oscquery_checkbox(self):
         use_oscquery = self.config.get_by_key("use_oscquery")
         self.elements[Element.USE_OSCQUERY_CHECKBOX] = dpg.add_checkbox(
-            label="Use OSCQuery", default_value=use_oscquery, callback=self.handle_input_change)
+            label="Use OSCQuery (Requires restart)", default_value=use_oscquery, callback=self.handle_input_change)
 
     def create_logs_output(self):
         dpg.add_text("Logs")

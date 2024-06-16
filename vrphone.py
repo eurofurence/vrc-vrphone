@@ -30,14 +30,14 @@ class VRPhone:
             params.phonebook_entry_3_button: ("phonebook", 2),
             params.phonebook_entry_4_button: ("phonebook", 3)
         }
-        self.osc_bool_microsip_parameters: dict[str, str] = {
-            params.call_started: "cmdCallStart",
-            params.call_ended: "cmdCallEnd",
-            params.call_incoming: "cmdIncomingCall",
-            params.call_outgoing: "cmdOutgoingCall",
-            params.call_answered: "cmdCallAnswer",
-            params.call_ring: "cmdCallRing",
-            params.call_busy: "cmdCallBusy"
+        self.osc_bool_microsip_parameters: dict[str, tuple] = {
+            params.call_started: ("cmdCallStart", "Call started"),
+            params.call_ended: ("cmdCallEnd", "Call ended"),
+            params.call_incoming: ("cmdIncomingCall", "Call incoming"),
+            params.call_outgoing: ("cmdOutgoingCall", "Call outgoing"),
+            params.call_answered: ("cmdCallAnswer", "Call answered"),
+            params.call_ring: ("cmdCallRing", "Phone ringing (Ring ring ring... VR Phone)"),
+            params.call_busy: ("cmdCallBusy", "Busy signal")
         }
 
     def handle_receiver_button(self):
@@ -106,7 +106,7 @@ class VRPhone:
             try:
                 self.gui.handle_active_button_reset()
                 #Build command queue from interactions
-                if len(self.interaction_queue) > 0 and not self.is_paused:
+                if len(self.interaction_queue) > 0:
                     for interaction in self.interaction_queue:
                         interaction_type = self.osc_bool_parameters.get(interaction)[0]
                         interaction_args = self.osc_bool_parameters.get(interaction)[1]
@@ -137,7 +137,6 @@ class VRPhone:
                             case _:
                                 self.gui.print_terminal("Unknown type?")
                         self.command_queue.discard(command)
-                        time.sleep(self.config.get_by_key("interaction_timeout"))
             except RuntimeError:
                 pass
             time.sleep(.05)
@@ -145,28 +144,21 @@ class VRPhone:
     def callback_handler(self) -> None:
         while True:
             try:
-                #Run commands
-                if len(self.command_queue) > 0:
-                    for command in self.command_queue:
-                        interaction = command[0]
-                        interaction_type = command[1]
-                        interaction_args = command[2]
-                        match interaction_type:
-                            case "receiver":
-                                #Add more logic!
-                                self.handle_receiver_button()
-                            case "phonebook":
-                                self.handle_phonebook_entry(interaction_args)
-                            case _:
-                                self.gui.print_terminal("Unknown type?")
-                        self.command_queue.discard(command)
-                        time.sleep(self.config.get_by_key("interaction_timeout"))
+                #Handle callback
+                if len(self.callback_queue) > 0:
+                    for callback in self.callback_queue:
+                        for parameter in self.osc_bool_microsip_parameters:
+                            command = self.osc_bool_microsip_parameters.get(parameter)[0]
+                            prettyname = self.osc_bool_microsip_parameters.get(parameter)[1]
+                            if command == callback[0]:
+                                self.gui.print_terminal("Microsip: {} ({}) Caller ID:{}".format(prettyname, command, callback[1]))
+                        self.callback_queue.discard(callback)
             except RuntimeError:
                 pass
             time.sleep(.05)
 
     def on_collission_enter(self, address: str, *args) -> None:
-        if address in self.osc_bool_parameters:
+        if address in self.osc_bool_parameters and not self.is_paused:
             if len(args) != 1:
                 return
             was_entered: bool = args[0]
@@ -174,61 +166,13 @@ class VRPhone:
                 return
             if was_entered and address not in self.interaction_queue:
                 self.interaction_queue.add(address)
+        time.sleep(self.config.get_by_key("interaction_timeout"))
 
     def microsip_callback(self, microsip_cmd: str, caller_id: str) -> None:
-        # if microsip_cmd not in self.active_callbacks:
-        #     self.active_callbacks.add(microsip_cmd)
-        # elif microsip_cmd in self.active_callbacks:
-        #     self.active_callbacks
-        match microsip_cmd:
-            case "cmdCallStart":
-                self.call_started = True
-                self.call_ring = False
-                self.call_ended = False
-                self.gui.print_terminal("Call started")
-            case "cmdCallEnd":
-                self.call_ended = True
-                self.call_ring = False
-                self.call_started = False
-                self.call_incoming = False
-                self.call_active = False
-                self.gui.print_terminal("Call ended")
-            case "cmdIncomingCall":
-                self.call_incoming = True
-                self.call_busy = False
-                self.call_outgoing = False
-                self.call_ended = False
-                self.gui.print_terminal("Call incoming")
-            case "cmdOutgoingCall":
-                self.call_outgoing = True
-                self.call_busy = False
-                self.call_ring = False
-                self.call_incoming = False
-                self.call_ended = False
-                self.gui.print_terminal("Call outgoing")
-            case "cmdCallAnswer":
-                self.call_answered = True
-                self.call_active = True
-                self.call_busy = False
-                self.call_ended = False
-                self.call_ring = False
-                self.gui.print_terminal("Call answered")
-            case "cmdCallRing":
-                self.call_ring = True
-                self.call_busy = False
-                self.call_answered = False
-                self.call_active = False
-                self.call_ended = False
-                self.gui.print_terminal("Phone ringing (Ring ring ring... VR Phone)")
-            case "cmdCallBusy":
-                self.call_busy = True
-                self.call_ring = False
-                self.call_answered = False
-                self.call_active = False
-                self.call_ended = False
-                self.gui.print_terminal("Busy signal")
-            case _:
-                print("Unknown microsip callback command received: {}".format(microsip_cmd))
+        try:
+            self.callback_queue.add((microsip_cmd, caller_id))
+        except:
+            pass
 
     def map_parameters(self, dispatcher: dispatcher.Dispatcher) -> None:
         dispatcher.set_default_handler(self.on_collission_enter)
