@@ -14,13 +14,7 @@ class VRPhone:
         self.interaction_queue: set = set()
         self.callback_queue: set = set()
         self.command_queue: set = set()
-        self.call_started = False
-        self.call_ended = False
-        self.call_incoming = False
-        self.call_outgoing = False
-        self.call_answered = False
-        self.call_ring = False
-        self.call_busy = False
+        self.last_interaction = time.time()
         self.call_active = False
         self.is_paused = False
         self.osc_bool_parameters: dict[str, tuple] = {
@@ -46,7 +40,7 @@ class VRPhone:
                 "Hanging up the phone"
             )
             self.call_hangup()
-        elif not self.call_active and self.call_incoming:
+        elif not self.call_active:
             self.gui.print_terminal(
                 "Phone picked up"
             )
@@ -158,7 +152,8 @@ class VRPhone:
             time.sleep(.05)
 
     def on_collission_enter(self, address: str, *args) -> None:
-        if address in self.osc_bool_parameters and not self.is_paused:
+        if address in self.osc_bool_parameters and not self.is_paused and (self.last_interaction + self.config.get_by_key("interaction_timeout")) <= time.time():
+            self.last_interaction = time.time()
             if len(args) != 1:
                 return
             was_entered: bool = args[0]
@@ -166,7 +161,6 @@ class VRPhone:
                 return
             if was_entered and address not in self.interaction_queue:
                 self.interaction_queue.add(address)
-        time.sleep(self.config.get_by_key("interaction_timeout"))
 
     def microsip_callback(self, microsip_cmd: str, caller_id: str) -> None:
         try:

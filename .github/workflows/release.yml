@@ -10,7 +10,7 @@ defaults:
     shell: bash
 
 jobs:
-  Build:
+  build:
     name: Build release
     runs-on: windows-latest
 
