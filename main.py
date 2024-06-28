@@ -74,8 +74,11 @@ try:
     #Start VRC interaction handler thread
     threading.Thread(target=vrphone.interaction_handler,
                      daemon=True).start()
+    #Start VRC feedback handler thread
+    threading.Thread(target=vrphone.feedback_handler,
+                     daemon=True).start()
     #Start Microsip command executor thread
-    threading.Thread(target=vrphone.command_executor,
+    threading.Thread(target=vrphone.command_handler,
                      daemon=True).start()
     #Start callback handler thread
     threading.Thread(target=vrphone.callback_handler,

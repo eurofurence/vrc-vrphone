@@ -14,7 +14,8 @@ class VRPhone:
         self.interaction_queue: set = set()
         self.callback_queue: set = set()
         self.command_queue: set = set()
-        self.last_interaction = time.time()
+        self.osc_output_queue: set = set()
+        self.last_interaction = time.time() - self.config.get_by_key("interaction_timeout")
         self.call_active = False
         self.is_paused = False
         self.osc_bool_parameters: dict[str, tuple] = {
@@ -84,53 +85,54 @@ class VRPhone:
         microsip_binary = self.config.get_by_key("microsip_binary")
         command = subprocess.run([microsip_binary, parameter])
         return command
+       
+    def feedback_handler(self) -> None:
+        while True:
+            try:
+                for output in self.osc_output_queue:
+                    for parameter in self.osc_bool_microsip_parameters:
+                        print("output: {}".format(output))
+                    self.osc_output_queue.discard(output)
 
-    # def handle_parameter_update(self, parameter):
-    #     element_name = self.parameter_to_button_element.get(parameter)
-    #     element_id = self.elements[element_name]
-    #     existing_element_label = self.button_labels[element_name]
-    #     result = "[" + existing_element_label + "]"
-    #     if element_id is not None:
-    #         dpg.configure_item(
-    #             element_id, label=result
-    #         )
- 
+            except RuntimeError: # race condition for set changing during iteration
+                pass
+            time.sleep(.05)
+
     def interaction_handler(self) -> None:
         while True:
             try:
                 self.gui.handle_active_button_reset()
                 #Build command queue from interactions
-                if len(self.interaction_queue) > 0:
-                    for interaction in self.interaction_queue:
-                        interaction_type = self.osc_bool_parameters.get(interaction)[0]
-                        interaction_args = self.osc_bool_parameters.get(interaction)[1]
-                        if interaction_type == "receiver" or interaction_type == "button":
-                            self.gui.handle_active_button_update(
-                                parameter=interaction)
-                        self.command_queue.add((interaction, interaction_type, interaction_args))
-                        self.interaction_queue.discard(interaction)
+                for interaction in self.interaction_queue:
+                    interaction_type = self.osc_bool_parameters.get(interaction)[0]
+                    interaction_args = self.osc_bool_parameters.get(interaction)[1]
+                    if interaction_type == "receiver" or interaction_type == "button":
+                        self.gui.handle_active_button_update(
+                            parameter=interaction)
+                    self.command_queue.add((interaction, interaction_type, interaction_args))
+                    self.interaction_queue.discard(interaction)
             except RuntimeError:  # race condition for set changing during iteration
                 pass
             time.sleep(.05)
 
-    def command_executor(self) -> None:
+    def command_handler(self) -> None:
         while True:
             try:
                 #Run commands
-                if len(self.command_queue) > 0:
-                    for command in self.command_queue:
-                        interaction = command[0]
-                        interaction_type = command[1]
-                        interaction_args = command[2]
-                        match interaction_type:
-                            case "receiver":
-                                #Add more logic!
-                                self.handle_receiver_button()
-                            case "phonebook":
-                                self.handle_phonebook_entry(interaction_args)
-                            case _:
-                                self.gui.print_terminal("Unknown type?")
-                        self.command_queue.discard(command)
+                for command in self.command_queue:
+                    interaction = command[0]
+                    interaction_type = command[1]
+                    interaction_args = command[2]
+                    match interaction_type:
+                        case "receiver":
+                            #Add more logic!
+                            self.handle_receiver_button()
+                            self.osc_output_queue.add((interaction, interaction_type, interaction_args))
+                        case "phonebook":
+                            self.handle_phonebook_entry(interaction_args)
+                        case _:
+                            self.gui.print_terminal("Unknown type?")
+                    self.command_queue.discard(command)
             except RuntimeError:
                 pass
             time.sleep(.05)
@@ -139,14 +141,13 @@ class VRPhone:
         while True:
             try:
                 #Handle callback
-                if len(self.callback_queue) > 0:
-                    for callback in self.callback_queue:
-                        for parameter in self.osc_bool_microsip_parameters:
-                            command = self.osc_bool_microsip_parameters.get(parameter)[0]
-                            prettyname = self.osc_bool_microsip_parameters.get(parameter)[1]
-                            if command == callback[0]:
-                                self.gui.print_terminal("Microsip: {} ({}) Caller ID:{}".format(prettyname, command, callback[1]))
-                        self.callback_queue.discard(callback)
+                for callback in self.callback_queue:
+                    for parameter in self.osc_bool_microsip_parameters:
+                        command = self.osc_bool_microsip_parameters.get(parameter)[0]
+                        prettyname = self.osc_bool_microsip_parameters.get(parameter)[1]
+                        if command == callback[0]:
+                            self.gui.print_terminal("Microsip: {} ({}) Caller ID:{}".format(prettyname, command, callback[1]))
+                    self.callback_queue.discard(callback)
             except RuntimeError:
                 pass
             time.sleep(.05)
