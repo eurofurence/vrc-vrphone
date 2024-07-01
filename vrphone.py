@@ -139,8 +139,6 @@ class VRPhone:
                                     self.call_hangup()
                                 case "phonebook":
                                     self.handle_phonebook_entry(taskdata[1])
-                                case _:
-                                    self.gui.print_terminal("Unknown interaction task: {}".format(taskdata[0]))
                         case "microsip":
                             if (taskdata[0] == "cmdCallEnd") or (taskdata[0] == "cmdCallBusy"):
                                 self.call_active = False
@@ -160,11 +158,7 @@ class VRPhone:
                                 self.call_outgoing = False
                                 self.call_incoming = False
                                 self.gui.print_terminal("{}: {}".format(taskdata[1], taskdata[2]))
-                            else:
-                                self.gui.print_terminal("Unknown microsip task: {}".format(taskdata))
                             self.output_queue.add(address)
-                        case _:
-                            self.gui.print_terminal("Unknown task type: {}".format(type))
                     self.main_queue.discard(task)
             except RuntimeError:
                 pass
