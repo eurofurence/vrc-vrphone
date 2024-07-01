@@ -16,11 +16,13 @@ if __name__ == "__main__":
       help="The ip of the OSC server")
   parser.add_argument("--port", type=int, default=9002,
       help="The port the OSC server is listening on")
+  parser.add_argument("--parameter", default="/avatar/parameters/vrphone_receiver_button",
+      help="The OSC parameter to use")
   args = parser.parse_args()
 
   client = udp_client.SimpleUDPClient(args.ip, args.port)
 
   for x in range(1):
     print("Send #{}".format(str(x)))
-    client.send_message("/avatar/parameters/vrphone_receiver_button", True)
-    time.sleep(1)
+    client.send_message(args.parameter, True)
+    #time.sleep(1)

@@ -1,4 +1,6 @@
 receiver_button = "/avatar/parameters/vrphone_receiver_button"
+pickup_button = "/avatar/parameters/vrphone_pickup_button"
+hangup_button = "/avatar/parameters/vrphone_hangup_button"
 phonebook_entry_1_button = "/avatar/parameters/vrphone_phonebook_entry_1_button"
 phonebook_entry_2_button = "/avatar/parameters/vrphone_phonebook_entry_2_button"
 phonebook_entry_3_button = "/avatar/parameters/vrphone_phonebook_entry_3_button"
