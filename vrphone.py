@@ -149,10 +149,12 @@ class VRPhone:
                                 self.call_active = False
                                 self.call_outgoing = True
                                 self.call_incoming = False
+                                self.gui.print_terminal("{}: {}".format(taskdata[1], taskdata[2]))
                             elif taskdata[0] == "cmdIncomingCall":
                                 self.call_active = False
                                 self.call_outgoing = False
                                 self.call_incoming = True
+                                self.gui.print_terminal("{}: {}".format(taskdata[1], taskdata[2]))
                             elif taskdata[0] == "cmdCallStart":
                                 self.call_active = True
                                 self.call_outgoing = False
