@@ -11,10 +11,9 @@ class VRPhone:
         self.config = config
         self.gui = gui
         self.osc_client = osc_client
-        self.interaction_queue: set = set()
-        self.callback_queue: set = set()
-        self.command_queue: set = set()
-        self.osc_output_queue: set = set()
+        self.input_queue: set = set()
+        self.output_queue: set = set()
+        self.main_queue: set = set()
         self.last_interaction = time.time() - self.config.get_by_key("interaction_timeout")
         self.call_active = False
         self.is_paused = False
@@ -86,73 +85,82 @@ class VRPhone:
         command = subprocess.run([microsip_binary, parameter])
         return command
        
-    def feedback_handler(self) -> None:
+    def output_handler(self) -> None:
         while True:
             try:
-                for output in self.osc_output_queue:
-                    for parameter in self.osc_bool_microsip_parameters:
-                        print("output: {}".format(output))
-                    self.osc_output_queue.discard(output)
-
+                for output in self.output_queue:
+                    for parameter in self.osc_bool_microsip_parameters:#
+                        if parameter == output:
+                            self.osc_client.send_message(parameter, True)
+                    self.output_queue.discard(output)
             except RuntimeError: # race condition for set changing during iteration
                 pass
             time.sleep(.05)
 
-    def interaction_handler(self) -> None:
+    def input_handler(self) -> None:
         while True:
             try:
                 self.gui.handle_active_button_reset()
                 #Build command queue from interactions
-                for interaction in self.interaction_queue:
-                    interaction_type = self.osc_bool_parameters.get(interaction)[0]
-                    interaction_args = self.osc_bool_parameters.get(interaction)[1]
-                    if interaction_type == "receiver" or interaction_type == "button":
-                        self.gui.handle_active_button_update(
-                            parameter=interaction)
-                    self.command_queue.add((interaction, interaction_type, interaction_args))
-                    self.interaction_queue.discard(interaction)
+                for address in self.input_queue:
+                    interaction_type = self.osc_bool_parameters.get(address)[0]
+                    interaction_args = self.osc_bool_parameters.get(address)[1]
+                    #if interaction_type == "receiver" or interaction_type == "button":
+                    #    self.gui.handle_active_button_update(parameter=interaction)
+                    self.main_queue.add((interaction_type, address, interaction_args))
+                    self.input_queue.discard(address)
             except RuntimeError:  # race condition for set changing during iteration
                 pass
             time.sleep(.05)
 
-    def command_handler(self) -> None:
+    def main_handler(self) -> None:
         while True:
             try:
-                #Run commands
-                for command in self.command_queue:
-                    interaction = command[0]
-                    interaction_type = command[1]
-                    interaction_args = command[2]
-                    match interaction_type:
+                #Run tasks
+                for task in self.main_queue:
+                    #tuple format:
+                    #type address taskdata
+                    type = task[0]
+                    address = task[1]
+                    taskdata = task[2]
+                    print(task)
+                    match type:
                         case "receiver":
-                            #Add more logic!
                             self.handle_receiver_button()
-                            self.osc_output_queue.add((interaction, interaction_type, interaction_args))
+                        case "pickup":
+                            self.call_pickup()
+                        case "hangup":
+                            self.call_hangup()
                         case "phonebook":
-                            self.handle_phonebook_entry(interaction_args)
+                            self.handle_phonebook_entry(taskdata)
+                        case "microsip":
+                            match taskdata[0]:
+                                case "cmdCallEnd":
+                                    self.call_active == False
+                                case "cmdOutgoingCall", "cmdIncomingCall" :
+                                    self.call_active == True
+                                #case _:
+                                #    self.gui.print_terminal("Microsip: Unknown callback state {}".format(taskdata[0]))
+                            self.output_queue.add(address)
                         case _:
-                            self.gui.print_terminal("Unknown type?")
-                    self.command_queue.discard(command)
+                            self.gui.print_terminal("Unknown task type?")
+                    self.main_queue.discard(task)
             except RuntimeError:
                 pass
             time.sleep(.05)
 
-    def callback_handler(self) -> None:
-        while True:
-            try:
-                #Handle callback
-                for callback in self.callback_queue:
-                    for parameter in self.osc_bool_microsip_parameters:
-                        command = self.osc_bool_microsip_parameters.get(parameter)[0]
-                        prettyname = self.osc_bool_microsip_parameters.get(parameter)[1]
-                        if command == callback[0]:
-                            self.gui.print_terminal("Microsip: {} ({}) Caller ID:{}".format(prettyname, command, callback[1]))
-                    self.callback_queue.discard(callback)
-            except RuntimeError:
-                pass
-            time.sleep(.05)
+    def microsip_handler(self, microsip_cmd: str, caller_id: str) -> None:
+        try:
+            for parameter in self.osc_bool_microsip_parameters:
+                command = self.osc_bool_microsip_parameters.get(parameter)[0]
+                prettyname = self.osc_bool_microsip_parameters.get(parameter)[1]
+                if command == microsip_cmd:
+                    #self.gui.print_terminal("Microsip: {} ({}) Caller ID:{}".format(prettyname, command, caller_id))
+                    self.main_queue.add(("microsip", parameter, (command, prettyname, caller_id)))
+        except:
+            pass
 
-    def on_collission_enter(self, address: str, *args) -> None:
+    def osc_collision(self, address: str, *args) -> None:
         if address in self.osc_bool_parameters and not self.is_paused and (self.last_interaction + self.config.get_by_key("interaction_timeout")) <= time.time():
             self.last_interaction = time.time()
             if len(args) != 1:
@@ -160,17 +168,11 @@ class VRPhone:
             was_entered: bool = args[0]
             if type(was_entered) != bool:
                 return
-            if was_entered and address not in self.interaction_queue:
-                self.interaction_queue.add(address)
-
-    def microsip_callback(self, microsip_cmd: str, caller_id: str) -> None:
-        try:
-            self.callback_queue.add((microsip_cmd, caller_id))
-        except:
-            pass
+            if was_entered and address not in self.input_queue:
+                self.input_queue.add(address)
 
     def map_parameters(self, dispatcher: dispatcher.Dispatcher) -> None:
-        dispatcher.set_default_handler(self.on_collission_enter)
+        dispatcher.set_default_handler(self.osc_collision)
 
     def init(self) -> None:
         self.gui.on_toggle_interaction_clicked.add_listener(

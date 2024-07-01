@@ -17,11 +17,11 @@ from gui import Gui
 
 class ReceiveCallback(Resource):
     def get(self, command, caller_id):
-        vrphone.microsip_callback(microsip_cmd=command, caller_id=caller_id)
+        vrphone.microsip_handler(microsip_cmd=command, caller_id=caller_id)
         return
 
     def put(self, command, caller_id):
-        vrphone.microsip_callback(microsip_cmd=command, caller_id=caller_id)
+        vrphone.microsip_handler(microsip_cmd=command, caller_id=caller_id)
         return
 
 def start_oscquery(server_udp_port, server_tcp_port):
@@ -68,23 +68,24 @@ try:
         ("127.0.0.1", server_udp_port), dispatcher, asyncio.new_event_loop())
     gui.print_terminal("OSC server starting on port: {}".format(server_udp_port))
 
-    #Start OSC Thread
+    #Start Server Threads for VRPhone
+    #Start OSC ServerThread
     threading.Thread(target=lambda: osc_server.serve_forever(2),
                      daemon=True).start()
-    #Start VRC interaction handler thread
-    threading.Thread(target=vrphone.interaction_handler,
-                     daemon=True).start()
-    #Start VRC feedback handler thread
-    threading.Thread(target=vrphone.feedback_handler,
-                     daemon=True).start()
-    #Start Microsip command executor thread
-    threading.Thread(target=vrphone.command_handler,
-                     daemon=True).start()
-    #Start callback handler thread
-    threading.Thread(target=vrphone.callback_handler,
-                     daemon=True).start()
-    #Start callback API
+    #Start microsip HTTP callback API
     threading.Thread(target=start_callbackapi,
+                     daemon=True).start()
+
+    #Start queue handlers
+    #Start VRC input handler
+    threading.Thread(target=vrphone.input_handler,
+                     daemon=True).start()
+    #Start VRC output handler
+    threading.Thread(target=vrphone.output_handler,
+                     daemon=True).start()
+
+    #Start vrphone main handler thread
+    threading.Thread(target=vrphone.main_handler,
                      daemon=True).start()
     gui.run()
 except KeyboardInterrupt:

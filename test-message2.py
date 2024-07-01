@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
   client = udp_client.SimpleUDPClient(args.ip, args.port)
 
-  for x in range(10):
+  for x in range(1):
     print("Send #{}".format(str(x)))
     client.send_message("/avatar/parameters/vrphone_receiver_button", True)
     time.sleep(1)
