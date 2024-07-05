@@ -4,6 +4,7 @@ import webbrowser
 from event import Event
 import dearpygui.dearpygui as dpg
 from enum import Enum, auto
+from time import gmtime, strftime
 
 
 class Element(Enum):
@@ -132,13 +133,11 @@ class Gui:
         new_data = app_data
         phonebook = self.config.get_by_key("phonebook")
         for i, element_group in enumerate(self.phonebook_elements):
-            row = i
             for e, element in enumerate(element_group):
-                column = e
                 if element == updated_element:
                     for p, (name, number) in enumerate(phonebook):
-                        if p == row:
-                            phonebook[row][column] = new_data
+                        if p == i:
+                            phonebook[i][e] = new_data
                             self.config.update("phonebook", phonebook)
                             return
 
@@ -168,8 +167,9 @@ class Gui:
 
     def print_terminal(self, text: str) -> None:
         value = dpg.get_value(self.elements[Element.TERMINAL_WINDOW_INPUT])
+        time = strftime("%d.%m %H:%M", gmtime())
         dpg.set_value(
-            self.elements[Element.TERMINAL_WINDOW_INPUT], text + '\n' + value)
+            self.elements[Element.TERMINAL_WINDOW_INPUT], '[' + time + '] ' + text + '\n'  + value)
 
     def on_clear_console(self, *args) -> None:
         dpg.set_value(
@@ -184,17 +184,17 @@ class Gui:
         self.elements[Element.MICROSIP_BINARY] = dpg.add_input_text(default_value=microsip_binary,
                                                                      width=-1, callback=self.handle_input_change)
     def create_interaction_timeout_input(self):
-        interaction_timeout = float(self.config.get_by_key("interaction_timeout")) or float(0)
+        interaction_timeout = self.config.get_by_key("interaction_timeout") or 2
         dpg.add_text("Interaction timeout")
-        self.elements[Element.INTERACTION_TIMEOUT] = dpg.add_input_float(default_value=interaction_timeout,
+        self.elements[Element.INTERACTION_TIMEOUT] = dpg.add_input_int(default_value=interaction_timeout,
                                                                      width=-1, callback=self.handle_input_change)
     def create_phonebook(self):
         dpg.add_text("Phonebook")
         with dpg.table(header_row=True, row_background=True,
                     borders_innerH=True, borders_outerH=True, borders_innerV=True,
                     borders_outerV=True) as table:
-            dpg.add_table_column(label="Name")
-            dpg.add_table_column(label="Number")
+            dpg.add_table_column(label="Name", width=-1)
+            dpg.add_table_column(label="Number", width=-1)
             for g, element_group in enumerate(self.phonebook_elements):
                 with dpg.table_row():
                     for p, (name, number) in enumerate(self.config.get_by_key("phonebook")):
@@ -214,19 +214,19 @@ class Gui:
 
     def create_server_port_input(self):
         server_port = self.config.get_by_key("server_port") or 9001
-        dpg.add_text("Server Port Number")
+        dpg.add_text("Server Port Number (Omitted if OSCQuery is used)")
         self.elements[Element.SERVER_PORT_NUMBER_INPUT] = dpg.add_input_int(default_value=server_port,
                                                                             width=-1, callback=self.handle_input_change)
 
     def create_use_oscquery_checkbox(self):
         use_oscquery = self.config.get_by_key("use_oscquery")
         self.elements[Element.USE_OSCQUERY_CHECKBOX] = dpg.add_checkbox(
-            label="Use OSCQuery", default_value=use_oscquery, callback=self.handle_input_change)
+            label="Use OSCQuery (Requires restart)", default_value=use_oscquery, callback=self.handle_input_change)
 
     def create_logs_output(self):
         dpg.add_text("Logs")
         self.elements[Element.TERMINAL_WINDOW_INPUT] = dpg.add_input_text(
-            multiline=True, readonly=True, height=90, width=-1)
+            multiline=True, readonly=True, height=200, width=-1)
 
     def create_button_group(self):
         with dpg.group(horizontal=True):

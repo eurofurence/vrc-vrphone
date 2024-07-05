@@ -25,12 +25,13 @@ class Config:
             "server_port": 9001,
             "microsip_binary": microsip_binary,
             "call_autoanswer": False,
-            "interaction_timeout": 2.0,
+            "callback_port": 19001,
+            "interaction_timeout": 2,
             "phonebook":  [
-                ("Lobby", "**1"),
-                ("First Floor", "**2"),
-                ("Support", "**3"),
-                ("Memes", "**4")
+                ["Lobby", "**1"],
+                ["First Floor", "**2"],
+                ["Support", "**3"],
+                ["Memes", "**4"]
             ]
         }
         self.current_config = None
