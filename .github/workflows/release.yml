@@ -39,30 +39,30 @@ jobs:
           if-no-files-found: error
 
 
-  release:
-    needs: build
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+  # release:
+  #   needs: build
+  #   permissions:
+  #     contents: write
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
 
-      - uses: actions/download-artifact@v3
-        with:
-          name: vrc-vrphone
-          path: artifact/vrc-vrphone
+  #     - uses: actions/download-artifact@v3
+  #       with:
+  #         name: vrc-vrphone
+  #         path: artifact/vrc-vrphone.exe
 
-      - uses: actions/download-artifact@v3
-        with:
-          name: VRC_VRPhone
-          path: artifact/VRC_VRPhone
+  #     - uses: actions/download-artifact@v3
+  #       with:
+  #         name: VRC_VRPhone
+  #         path: artifact/VRC_VRPhone
       
-      - name: Display structure of downloaded files
-        run: ls -R
-        working-directory: artifact
+  #     - name: Display structure of downloaded files
+  #       run: ls -R
+  #       working-directory: artifact
 
-      - uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: |
-            artifact/vrc-vrphone/vrc-vrphone.exe
+  #     - uses: softprops/action-gh-release@v1
+  #       if: startsWith(github.ref, 'refs/tags/')
+  #       with:
+  #         files: |
+  #           artifact/vrc-vrphone/vrc-vrphone.exe
