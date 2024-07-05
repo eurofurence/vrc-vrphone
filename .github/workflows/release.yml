@@ -29,7 +29,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Build with pyinstaller
-        run: pyinstaller --hidden-import zeroconf._utils.ipaddress --hidden-import zeroconf._handlers.answers --hidden-import=clr --add-data "./img/logo.png;img" --onefile --distpath ./build --name=vrc-vrphone main.py
+        run: pyinstaller --hidden-import zeroconf._utils.ipaddress --hidden-import zeroconf._handlers.answers --hidden-import=clr --add-data "./img/logo.png;img" --noconsole --onefile --distpath ./build --name=vrc-vrphone main.py
 
       - name: Deploy EXE
         uses: actions/upload-artifact@v3
