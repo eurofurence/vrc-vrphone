@@ -34,13 +34,13 @@ jobs:
       - name: Deploy EXE
         uses: actions/upload-artifact@v3
         with:
-          name: vrphone
+          name: vrc-vrphone
           path: ./build/vrc-vrphone.exe
           if-no-files-found: error
 
 
   release:
-    needs: build
+    needs: Build
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -51,11 +51,6 @@ jobs:
         with:
           name: vrc-vrphone
           path: artifact/vrc-vrphone
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: VRC_VRPhone
-          path: artifact/VRC_VRPhone
       
       - name: Display structure of downloaded files
         run: ls -R
