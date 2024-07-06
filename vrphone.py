@@ -28,14 +28,14 @@ class VRPhone:
             params.phonebook_entry_3_button: ("phonebook", 2),
             params.phonebook_entry_4_button: ("phonebook", 3)
         }
-        self.osc_bool_microsip_parameters: dict[str, tuple] = {
-            params.call_started: ("cmdCallStart", "Call started"),
-            params.call_ended: ("cmdCallEnd", "Call ended"),
-            params.call_incoming: ("cmdIncomingCall", "Call incoming"),
-            params.call_outgoing: ("cmdOutgoingCall", "Call outgoing"),
-            params.call_answered: ("cmdCallAnswer", "Call answered"),
-            params.call_ring: ("cmdCallRing", "Phone ringing (Ring ring ring... VR Phone)"),
-            params.call_busy: ("cmdCallBusy", "Busy signal")
+        self.microsip_command_parameters: dict[str, tuple] = {
+            "cmdCallStart": ("Call started", params.call_started),
+            "cmdCallEnd": ("Call ended", params.call_ended),
+            "cmdIncomingCall": ("Call incoming", params.call_incoming),
+            "cmdOutgoingCall": ("Call outgoing", params.call_outgoing),
+            "cmdCallAnswer": ("Call answered", params.call_answered),
+            "cmdCallRing": ("Phone ringing (Ring ring ring... VR Phone)", params.call_ring),
+            "cmdCallBusy": ("Busy signal", params.call_busy),
         }
 
     def handle_receiver_button(self):
@@ -79,6 +79,27 @@ class VRPhone:
                     "Call already active, ignoring phone book button action"
             )
 
+    def handle_microsip_osc_states(self, microsip_cmd):
+        if (microsip_cmd == "cmdCallEnd") or (microsip_cmd == "cmdCallBusy"):
+           self.call_active = False
+           self.call_outgoing = False
+           self.call_incoming = False
+        elif microsip_cmd == "cmdOutgoingCall":
+           self.call_active = False
+           self.call_outgoing = True
+           self.call_incoming = False
+        elif microsip_cmd == "cmdIncomingCall":
+           self.call_active = False
+           self.call_outgoing = False
+           self.call_incoming = True
+        elif microsip_cmd == "cmdCallStart":
+           self.call_active = True
+           self.call_outgoing = False
+           self.call_incoming = False
+        #todo add state resetting
+        self.gui.print_terminal("{}: {}".format(microsip_cmd))
+        self.output_queue.add((microsip_cmd, True))
+
     def execute_microsip_command(self, parameter: str):
         microsip_binary = self.config.get_by_key("microsip_binary")
         command = subprocess.run([microsip_binary, parameter])
@@ -96,11 +117,9 @@ class VRPhone:
     def output_handler(self) -> None:
         while True:
             try:
-                for output in self.output_queue:
-                    for parameter in self.osc_bool_microsip_parameters:
-                        if parameter == output:
-                            self.osc_client.send_message(parameter, True)
-                    self.output_queue.discard(output)
+                for address, value in self.output_queue:
+                    self.osc_client.send_message(address, value)
+                    self.output_queue.discard((address, value))
             except RuntimeError: # race condition for set changing during iteration
                 pass
             time.sleep(.05)
@@ -126,8 +145,7 @@ class VRPhone:
                     #tuple format:
                     #str(type) str(address) tuple(taskdata)
                     type = task[0]
-                    address = task[1]
-                    taskdata = task[2]
+                    taskdata = task[1]
                     match type:
                         case "interaction":
                             match taskdata[0]:
@@ -140,38 +158,17 @@ class VRPhone:
                                 case "phonebook":
                                     self.handle_phonebook_entry(taskdata[1])
                         case "microsip":
-                            if (taskdata[0] == "cmdCallEnd") or (taskdata[0] == "cmdCallBusy"):
-                                self.call_active = False
-                                self.call_outgoing = False
-                                self.call_incoming = False
-                                self.gui.print_terminal("{}: {}".format(taskdata[1], taskdata[2]))
-                            elif taskdata[0] == "cmdOutgoingCall":
-                                self.call_active = False
-                                self.call_outgoing = True
-                                self.call_incoming = False
-                                self.gui.print_terminal("{}: {}".format(taskdata[1], taskdata[2]))
-                            elif taskdata[0] == "cmdIncomingCall":
-                                self.call_active = False
-                                self.call_outgoing = False
-                                self.call_incoming = True
-                                self.gui.print_terminal("{}: {}".format(taskdata[1], taskdata[2]))
-                            elif taskdata[0] == "cmdCallStart":
-                                self.call_active = True
-                                self.call_outgoing = False
-                                self.call_incoming = False
-                                self.gui.print_terminal("{}: {}".format(taskdata[1], taskdata[2]))
-                            self.output_queue.add(address)
+                            self.handle_microsip_osc_states(taskdata[0], taskdata[1], taskdata[2])
                     self.main_queue.discard(task)
             except RuntimeError:
                 pass
             time.sleep(.05)
 
     def microsip_handler(self, microsip_cmd: str, caller_id: str) -> None:
-        for parameter in self.osc_bool_microsip_parameters:
-            command = self.osc_bool_microsip_parameters.get(parameter)[0]
-            prettyname = self.osc_bool_microsip_parameters.get(parameter)[1]
-            if command == microsip_cmd:
-                self.main_queue.add(("microsip", parameter, (microsip_cmd, prettyname, caller_id)))
+        if microsip_cmd in self.microsip_command_parameters:
+            prettyname =  self.microsip_command_parameters.get(microsip_cmd)[0]
+            parameter = self.microsip_command_parameters.get(microsip_cmd)[1]
+            self.main_queue.add(("microsip", (microsip_cmd, prettyname, caller_id, parameter)))
 
     def osc_collision(self, address: str, *args) -> None:
         if address in self.osc_bool_parameters and not self.is_paused and (self.last_interaction + self.config.get_by_key("interaction_timeout")) <= time.time():
