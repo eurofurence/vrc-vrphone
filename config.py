@@ -27,6 +27,8 @@ class Config:
             "call_autoanswer": False,
             "callback_port": 19001,
             "interaction_timeout": 2,
+            "max_call_time": 0,
+            "max_ring_time": 10,
             "phonebook":  [
                 ["Lobby", "**1"],
                 ["First Floor", "**2"],

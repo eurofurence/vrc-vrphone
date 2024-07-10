@@ -76,16 +76,16 @@ try:
     threading.Thread(target=start_callbackapi,
                      daemon=True).start()
 
-    #Start queue handlers
-    #Start VRC input handler
-    threading.Thread(target=vrphone.input_handler,
+    #Start queue workers
+    #Start VRC input worker thread
+    threading.Thread(target=vrphone.input_worker,
                      daemon=True).start()
-    #Start VRC output handler
-    threading.Thread(target=vrphone.output_handler,
+    #Start VRC output worker thread
+    threading.Thread(target=vrphone.output_worker,
                      daemon=True).start()
 
-    #Start vrphone main handler thread
-    threading.Thread(target=vrphone.main_handler,
+    #Start vrphone main worker thread
+    threading.Thread(target=vrphone.main_worker,
                      daemon=True).start()
     gui.run()
 except KeyboardInterrupt:
