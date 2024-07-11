@@ -13,15 +13,16 @@ from waitress import serve
 from vrphone import VRPhone
 from config import Config
 from gui import Gui
+from microsip import MicroSIP
 
 
 class ReceiveCallback(Resource):
     def get(self, command, caller_id):
-        vrphone.microsip_handler(microsip_cmd=command, caller_id=caller_id)
+        microsip.microsip_handler(microsip_cmd=command, caller_id=caller_id)
         return
 
     def put(self, command, caller_id):
-        vrphone.microsip_handler(microsip_cmd=command, caller_id=caller_id)
+        microsip.microsip_handler(microsip_cmd=command, caller_id=caller_id)
         return
 
 def start_oscquery(server_udp_port, server_tcp_port):
@@ -43,10 +44,12 @@ try:
               window_height=1000, logo_path=logo_path)
     gui.init()
     osc_client = udp_client.SimpleUDPClient("127.0.0.1", 9000)
-    vrphone = VRPhone(config=cfg, gui=gui, osc_client=osc_client)
+    microsip = MicroSIP(config=cfg, gui=gui)
+    vrphone = VRPhone(config=cfg, gui=gui, microsip=microsip, osc_client=osc_client)
     vrphone.init()
     dispatcher = Dispatcher()
     vrphone.map_parameters(dispatcher)
+    microsip.setqueues(main_queue=vrphone.main_queue, output_queue=vrphone.output_queue)
 
     #Callback API Init
     app = Flask(__name__)
