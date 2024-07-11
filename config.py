@@ -1,7 +1,6 @@
 import json
 import params
 import os
-import json
 
 def merge_dicts(dict1, dict2):
     """ Recursively merges dict2 into dict1 """

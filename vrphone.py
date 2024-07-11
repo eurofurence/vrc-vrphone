@@ -19,16 +19,16 @@ class VRPhone:
         self.call_outgoing = False
         self.call_incoming = False
         self.is_paused = False
-        self.osc_bool_parameters: dict[str, tuple] = {
+        self.osc_bool_parameter_commands: dict[str, tuple] = {
             params.receiver_button: ("receiver", None),
-            params.pickup_button: ("pickup", None),
+            params.pickup_button: ("answer", None),
             params.hangup_button: ("hangup", None),
             params.phonebook_entry_1_button: ("phonebook", 0),
             params.phonebook_entry_2_button: ("phonebook", 1),
             params.phonebook_entry_3_button: ("phonebook", 2),
             params.phonebook_entry_4_button: ("phonebook", 3)
         }
-        self.microsip_command_parameters: dict[str, tuple] = {
+        self.microsip_state_parameters: dict[str, tuple] = {
             "cmdCallStart": ("Call started", params.call_started),
             "cmdCallEnd": ("Call ended", params.call_ended),
             "cmdIncomingCall": ("Call incoming", params.call_incoming),
@@ -48,22 +48,30 @@ class VRPhone:
             self.gui.print_terminal(
                 "Phone picked up"
             )
-            self.call_pickup()
+            self.call_answer()
         return
     
-    def call_pickup(self):
+    def call_answer(self):
         self.call_active = True
         self.call_outgoing = False
         self.call_incoming = False
-        command = self.execute_microsip_command("/answer")
-        return command
+        result = self.execute_microsip_command("/answer")
+        return result
     
-    def call_hangup(self):
+    def call_hangup(self, command = "hangupall"):
         self.call_active = False
         self.call_outgoing = False
         self.call_incoming = False
-        command = self.execute_microsip_command("/hangupall")
-        return command
+        result = self.execute_microsip_command("/" + command)
+        return result
+
+    def send_dtmf(self, code):
+        result = self.execute_microsip_command("/dtmf:" + code)
+        return result
+    
+    def call_transfer(self, number):
+        result = self.execute_microsip_command("/transfer:" + number)
+        return result
 
     def call_phonebook_entry(self, entry):
         if not self.call_active:
@@ -83,12 +91,20 @@ class VRPhone:
         match command:
             case "receiver":
                 self.receiver_button()
-            case "pickup":
-                self.call_pickup()
+            case "answer":
+                self.call_answer()
             case "hangup":
                 self.call_hangup()
+            case "hangupcalling":
+                self.call_hangup(command)
+            case "hangupincoming":
+                self.call_hangup(command)
             case "phonebook":
                 self.call_phonebook_entry(args)
+            case "dtmf":
+                self.send_dtmf(args)
+            case "transfer":
+                self.call_transfer(args)
 
     def update_osc_state(self, tasktype, parameter = None):
         match tasktype:
@@ -97,8 +113,8 @@ class VRPhone:
             case "reset":
                 self.output_queue.add((parameter, False))
             case "resetall":
-                for cmd in self.microsip_command_parameters:
-                    self.output_queue.add((self.microsip_command_parameters.get(cmd)[1], False))
+                for cmd in self.microsip_state_parameters:
+                    self.output_queue.add((self.microsip_state_parameters.get(cmd)[1], False))
             case _:
                 self.gui.print_terminal("Unknown OSC event: {}".format(tasktype))
 
@@ -108,30 +124,30 @@ class VRPhone:
             self.call_outgoing = False
             self.call_incoming = False
             for cmd in ["cmdOutgoingCall", "cmdIncomingCall", "cmdCallStart", "cmdCallAnswer", "cmdCallRing"]:
-                self.update_osc_state("reset", self.microsip_command_parameters.get(cmd)[1])
-            self.main_queue.add(("event", time.time() + 1, ("osc", "reset", self.microsip_command_parameters.get("cmdCallEnd")[1])))
+                self.update_osc_state("reset", self.microsip_state_parameters.get(cmd)[1])
+            self.main_queue.add(("event", time.time() + 1, ("osc", "reset", self.microsip_state_parameters.get("cmdCallEnd")[1])))
         elif taskdata[0] == "cmdOutgoingCall":
             self.call_active = False
             self.call_outgoing = True
             self.call_incoming = False
             for cmd in ["cmdCallEnd", "cmdCallBusy", "cmdIncomingCall", "cmdCallStart", "cmdCallAnswer", "cmdCallRing"]:
-                self.update_osc_state("reset", self.microsip_command_parameters.get(cmd)[1])
+                self.update_osc_state("reset", self.microsip_state_parameters.get(cmd)[1])
         elif taskdata[0] == "cmdIncomingCall":
             self.call_active = False
             self.call_outgoing = False
             self.call_incoming = True
             for cmd in ["cmdCallEnd", "cmdCallBusy", "cmdOutgoingCall", "cmdCallStart", "cmdCallAnswer"]:
-                self.update_osc_state("reset", self.microsip_command_parameters.get(cmd)[1])
+                self.update_osc_state("reset", self.microsip_state_parameters.get(cmd)[1])
         elif (taskdata[0] == "cmdCallStart") or (taskdata[0]  == "cmdCallAnswer"):
             self.call_active = True
             self.call_outgoing = False
             self.call_incoming = False
             for cmd in ["cmdCallEnd", "cmdCallBusy", "cmdCallRing"]:
-                self.update_osc_state("reset", self.microsip_command_parameters.get(cmd)[1])
+                self.update_osc_state("reset", self.microsip_state_parameters.get(cmd)[1])
         self.gui.print_terminal("{}: {}".format(taskdata[1], taskdata[2]))
         self.update_osc_state("set", taskdata[3])
         if self.config.get_by_key("call_autoanswer") and taskdata[0] == "cmdIncomingCall":
-            self.call_pickup()
+            self.call_answer()
 
 
     def handle_event(self, eventdata) -> None:
@@ -171,8 +187,8 @@ class VRPhone:
         while True:
             try:
                 for address in self.input_queue:
-                    interaction_type = self.osc_bool_parameters.get(address)[0]
-                    interaction_args = self.osc_bool_parameters.get(address)[1]
+                    interaction_type = self.osc_bool_parameter_commands.get(address)[0]
+                    interaction_args = self.osc_bool_parameter_commands.get(address)[1]
                     self.main_queue.add(("interaction", None, (address, interaction_type, interaction_args)))
                     self.input_queue.discard(address)
             except RuntimeError:
@@ -185,7 +201,7 @@ class VRPhone:
                 for maintask in self.main_queue:
                     match maintask[0]:
                         case "interaction":
-                            self.run_phone_command(maintask[2])
+                            self.run_phone_command(maintask[2][1], maintask[2][2])
                         case "microsip":
                             self.handle_microsip_feedback(maintask[2])
                         case "event":
@@ -201,13 +217,13 @@ class VRPhone:
             time.sleep(.025)
 
     def microsip_handler(self, microsip_cmd: str, caller_id: str) -> None:
-        if microsip_cmd in self.microsip_command_parameters:
-            prettyname =  self.microsip_command_parameters.get(microsip_cmd)[0]
-            parameter = self.microsip_command_parameters.get(microsip_cmd)[1]
+        if microsip_cmd in self.microsip_state_parameters:
+            prettyname =  self.microsip_state_parameters.get(microsip_cmd)[0]
+            parameter = self.microsip_state_parameters.get(microsip_cmd)[1]
             self.main_queue.add(("microsip", None, (microsip_cmd, prettyname, caller_id, parameter)))
 
     def osc_collision(self, address: str, *args) -> None:
-        if address in self.osc_bool_parameters and not self.is_paused and (self.last_interaction + self.config.get_by_key("interaction_timeout")) <= time.time():
+        if address in self.osc_bool_parameter_commands and not self.is_paused and (self.last_interaction + self.config.get_by_key("interaction_timeout")) <= time.time():
             self.last_interaction = time.time()
             if len(args) != 1:
                 return
