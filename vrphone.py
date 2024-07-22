@@ -5,7 +5,6 @@ from gui import Gui
 from microsip import MicroSIP
 import params
 import time
-import subprocess
 
 class VRPhone:
     def __init__(self, config: Config, gui: Gui, microsip: MicroSIP, osc_client):
@@ -28,8 +27,7 @@ class VRPhone:
             params.phonebook_entry_4_button: ("phonebook", 3)
         }
 
-
-    def handle_event(self, eventdata) -> None:
+    def handle_event(self, eventdata):
         match eventdata[0]:
             case "osc":
                 self.micropsip.update_osc_state(eventdata[1], eventdata[2])
@@ -47,7 +45,7 @@ class VRPhone:
             self.gui.print_terminal(
                 "Interactions Continued.")
     
-    def output_worker(self) -> None:
+    def output_worker(self):
         while True:
             try:
                 for address, value in self.output_queue:
@@ -57,7 +55,7 @@ class VRPhone:
                 pass
             time.sleep(.05)
 
-    def input_worker(self) -> None:
+    def input_worker(self):
         while True:
             try:
                 for address in self.input_queue:
@@ -69,7 +67,7 @@ class VRPhone:
                 pass
             time.sleep(.05)
 
-    def main_worker(self) -> None:
+    def main_worker(self):
         while True:
             try:
                 for maintask in self.main_queue:
@@ -90,7 +88,7 @@ class VRPhone:
                 pass
             time.sleep(.025)
 
-    def osc_collision(self, address: str, *args) -> None:
+    def osc_collision(self, address: str, *args):
         if address in self.osc_bool_parameter_commands and not self.is_paused and (self.last_interaction + self.config.get_by_key("interaction_timeout")) <= time.time():
             self.last_interaction = time.time()
             if len(args) != 1:
@@ -101,9 +99,9 @@ class VRPhone:
             if was_entered and address not in self.input_queue:
                 self.input_queue.add(address)
 
-    def map_parameters(self, dispatcher: dispatcher.Dispatcher) -> None:
+    def map_parameters(self, dispatcher: dispatcher.Dispatcher):
         dispatcher.set_default_handler(self.osc_collision)
 
-    def init(self) -> None:
+    def init(self):
         self.gui.on_toggle_interaction_clicked.add_listener(
             self.toggle_interactions)

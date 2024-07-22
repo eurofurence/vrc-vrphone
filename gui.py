@@ -145,17 +145,17 @@ class Gui:
 
         return resize_callback
 
-    def print_terminal(self, text: str) -> None:
+    def print_terminal(self, text: str):
         value = dpg.get_value(self.elements[Element.TERMINAL_WINDOW_INPUT])
         time = strftime("%d.%m %H:%M", gmtime())
         dpg.set_value(
             self.elements[Element.TERMINAL_WINDOW_INPUT], '[' + time + '] ' + text + '\n'  + value)
 
-    def on_clear_console(self, *args) -> None:
+    def on_clear_console(self, *args):
         dpg.set_value(
             self.elements[Element.TERMINAL_WINDOW_INPUT], "Cleared.")
 
-    def add_listeners(self) -> None:
+    def add_listeners(self):
         self.on_clear_console_clicked.add_listener(self.on_clear_console)
 
     def create_microsip_binary_input(self):

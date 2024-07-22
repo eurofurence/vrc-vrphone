@@ -5,7 +5,7 @@ import time
 import subprocess
 
 class MicroSIP:
-    def __init__(self, config: Config, gui: Gui, main_queue: set = set(), output_queue: set = set()) -> None:
+    def __init__(self, config: Config, gui: Gui, main_queue: set = set(), output_queue: set = set()):
         self.config = config
         self.gui = gui
         self.main_queue = main_queue
@@ -139,7 +139,7 @@ class MicroSIP:
         command = subprocess.run([microsip_binary, parameter])
         return command
     
-    def microsip_handler(self, microsip_cmd: str, caller_id: str) -> None:
+    def microsip_handler(self, microsip_cmd: str, caller_id: str):
         if microsip_cmd in self.microsip_state_parameters:
             prettyname =  self.microsip_state_parameters.get(microsip_cmd)[0]
             parameter = self.microsip_state_parameters.get(microsip_cmd)[1]
