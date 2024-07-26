@@ -23,6 +23,6 @@ if __name__ == "__main__":
   client = udp_client.SimpleUDPClient(args.ip, args.port)
 
   for x in range(1):
-    print("Send #{}".format(str(x)))
+    print("Send #{} with parameter {}".format(str(x), args.parameter))
     client.send_message(args.parameter, True)
     #time.sleep(1)

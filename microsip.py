@@ -22,6 +22,15 @@ class MicroSIP:
             "cmdCallRing": ("Phone ringing (Ring ring ring... VR Phone)", params.call_ring),
             "cmdCallBusy": ("Busy signal", params.call_busy),
         }
+        self.interface_parameters: dict[str, tuple] = {
+            "cmdCallStart": ("Call started", params.call_started),
+            "cmdCallEnd": ("Call ended", params.call_ended),
+            "cmdIncomingCall": ("Call incoming", params.call_incoming),
+            "cmdOutgoingCall": ("Call outgoing", params.call_outgoing),
+            "cmdCallAnswer": ("Call answered", params.call_answered),
+            "cmdCallRing": ("Phone ringing (Ring ring ring... VR Phone)", params.call_ring),
+            "cmdCallBusy": ("Busy signal", params.call_busy),
+        }
 
     def run_phone_command(self, command, args = None):
         match command:

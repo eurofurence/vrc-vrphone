@@ -26,6 +26,13 @@ class VRPhone:
             params.phonebook_entry_3_button: ("phonebook", 2),
             params.phonebook_entry_4_button: ("phonebook", 3)
         }
+        self.osc_bool_parameter_interface: dict[str, tuple] = {
+            params.keypad_button: ("keypad_button", None),
+            params.ok_button: ("answer", None),
+            params.cancel_button: ("hangup", None),
+            params.yes_button: ("phonebook", 0),
+            params.no_button: ("phonebook", 1)
+        }
 
     def handle_event(self, eventdata):
         match eventdata[0]:
