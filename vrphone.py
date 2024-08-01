@@ -5,6 +5,7 @@ from gui import Gui
 from microsip import MicroSIP
 import params
 import time
+import threading
 
 class VRPhone:
     def __init__(self, config: Config, gui: Gui, microsip: MicroSIP, osc_client):
@@ -26,13 +27,26 @@ class VRPhone:
             params.phonebook_entry_3_button: ("phonebook", 2),
             params.phonebook_entry_4_button: ("phonebook", 3)
         }
-        self.osc_bool_parameter_interface: dict[str, tuple] = {
-            params.keypad_button: ("keypad_button", None),
-            params.ok_button: ("answer", None),
-            params.cancel_button: ("hangup", None),
-            params.yes_button: ("phonebook", 0),
-            params.no_button: ("phonebook", 1)
+        #(parameter, (string("name"), float("menutimeout") ))
+        self.osc_bool_parameter_buttons: dict[str, tuple] = {
+            params.keypad_button: ("keypad_button", 1.0),
+            params.center_button: ("center_button", 1.0),
+            params.ok_button: ("ok_button", 1.0),
+            params.cancel_button: ("cancel_button", 1.0),
+            params.yes_button: ("yes_button", 1.0),
+            params.no_button: ("no_button", 1.0)
         }
+        self.gui.on_toggle_interaction_clicked.add_listener(
+            self.toggle_interactions)
+
+    def handle_event(self, eventdata):
+        match eventdata[0]:
+            case "osc":
+                self.micropsip.update_osc_state(eventdata[1], eventdata[2])
+            case "interaction":
+                self.micropsip.run_phone_command(eventdata[1], eventdata[2])
+            case _:
+                print("Unknown event")
 
     def handle_event(self, eventdata):
         match eventdata[0]:
@@ -52,7 +66,7 @@ class VRPhone:
             self.gui.print_terminal(
                 "Interactions Continued.")
     
-    def output_worker(self):
+    def _output_worker(self):
         while True:
             try:
                 for address, value in self.output_queue:
@@ -62,25 +76,61 @@ class VRPhone:
                 pass
             time.sleep(.05)
 
-    def input_worker(self):
+    def _input_worker(self):
         while True:
             try:
                 for address in self.input_queue:
-                    interaction_type = self.osc_bool_parameter_commands.get(address)[0]
-                    interaction_args = self.osc_bool_parameter_commands.get(address)[1]
-                    self.main_queue.add(("interaction", None, (address, interaction_type, interaction_args)))
+                    if address in self.osc_bool_parameter_commands:
+                        interaction_type = self.osc_bool_parameter_commands.get(address)[0]
+                        interaction_args = self.osc_bool_parameter_commands.get(address)[1]
+                        self.main_queue.add(("interaction", None, (address, interaction_type, interaction_args)))
+                    elif address in self.osc_bool_parameter_buttons:
+                        button_type = self.osc_bool_parameter_buttons.get(address)[0]
+                        button_timeout = time.time() + self.osc_bool_parameter_buttons.get(address)[1]
+                        self.main_queue.add(("menubutton", button_timeout, (address, button_type)))
                     self.input_queue.discard(address)
             except RuntimeError:
                 pass
             time.sleep(.05)
 
-    def main_worker(self):
+    def _main_worker(self):
         while True:
             try:
                 for maintask in self.main_queue:
                     match maintask[0]:
                         case "interaction":
                             self.micropsip.run_phone_command(maintask[2][1], maintask[2][2])
+                        case "menubutton":
+                            if maintask[1] <= time.time():
+                                self.handle_menubutton_event(maintask[2][1], maintask[2][2])
+                            else:
+                                continue
+                        case "microsip":
+                            self.micropsip.handle_microsip_feedback(maintask[2])
+                        case "event":
+                            if maintask[1] <= time.time():
+                                self.handle_event(maintask[2])
+                            else:
+                                continue
+                        case _:
+                            self.gui.print_terminal("Unknown task type in main queue.")
+                    self.main_queue.discard(maintask)
+            except RuntimeError:
+                pass
+            time.sleep(.025)
+
+    def _menu_worker(self):
+        while True:
+            try:
+                for maintask in self.main_queue:
+                    match maintask[0]:
+                        case "interaction":
+                            self.micropsip.run_phone_command(maintask[2][1], maintask[2][2])
+                        case "menubutton":
+                            if maintask[1] <= time.time():
+                                self.handle_menubutton_event(maintask[2][1], maintask[2][2])
+                            else:
+                                continue
                         case "microsip":
                             self.micropsip.handle_microsip_feedback(maintask[2])
                         case "event":
@@ -96,19 +146,23 @@ class VRPhone:
             time.sleep(.025)
 
     def osc_collision(self, address: str, *args):
-        if address in self.osc_bool_parameter_commands and not self.is_paused and (self.last_interaction + self.config.get_by_key("interaction_timeout")) <= time.time():
-            self.last_interaction = time.time()
-            if len(args) != 1:
-                return
-            was_entered: bool = args[0]
-            if type(was_entered) != bool:
-                return
-            if was_entered and address not in self.input_queue:
-                self.input_queue.add(address)
+        if not self.is_paused and (self.last_interaction + self.config.get_by_key("interaction_timeout")) <= time.time():    
+            if address in self.osc_bool_parameter_commands or address in self.osc_bool_parameter_buttons:
+                self.last_interaction = time.time()
+                if len(args) != 1:
+                    return
+                was_entered: bool = args[0]
+                if type(was_entered) != bool:
+                    return
+                if was_entered and address not in self.input_queue:
+                    self.input_queue.add(address)
 
     def map_parameters(self, dispatcher: dispatcher.Dispatcher):
         dispatcher.set_default_handler(self.osc_collision)
+    
+    def run(self):
+        threading.Thread(target=self._output_worker, daemon=True).start()
+        threading.Thread(target=self._input_worker, daemon=True).start()
+        threading.Thread(target=self._main_worker, daemon=True).start()
+        threading.Thread(target=self._menu_worker, daemon=True).start()
 
-    def init(self):
-        self.gui.on_toggle_interaction_clicked.add_listener(
-            self.toggle_interactions)

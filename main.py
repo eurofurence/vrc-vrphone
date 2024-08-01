@@ -31,7 +31,7 @@ def start_oscquery(server_udp_port, server_tcp_port):
         oscquery_server.advertise_endpoint("/avatar")
     return start_server
 
-def start_callbackapi() -> None:
+def start_callbackapi():
     serve(app, host="127.0.0.1", port=19001)
     return
 
@@ -46,7 +46,6 @@ try:
     osc_client = udp_client.SimpleUDPClient("127.0.0.1", 9000)
     microsip = MicroSIP(config=cfg, gui=gui)
     vrphone = VRPhone(config=cfg, gui=gui, microsip=microsip, osc_client=osc_client)
-    vrphone.init()
     dispatcher = Dispatcher()
     vrphone.map_parameters(dispatcher)
     microsip.setqueues(main_queue=vrphone.main_queue, output_queue=vrphone.output_queue)
@@ -79,17 +78,7 @@ try:
     threading.Thread(target=start_callbackapi,
                      daemon=True).start()
 
-    #Start queue workers
-    #Start VRC input worker thread
-    threading.Thread(target=vrphone.input_worker,
-                     daemon=True).start()
-    #Start VRC output worker thread
-    threading.Thread(target=vrphone.output_worker,
-                     daemon=True).start()
-
-    #Start vrphone main worker thread
-    threading.Thread(target=vrphone.main_worker,
-                     daemon=True).start()
+    vrphone.run()
     gui.run()
 except KeyboardInterrupt:
     print("Shutting Down...\n")
