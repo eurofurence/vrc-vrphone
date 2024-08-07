@@ -14,6 +14,7 @@ from vrphone import VRPhone
 from config import Config
 from gui import Gui
 from microsip import MicroSIP
+from menu import Menu
 
 
 class ReceiveCallback(Resource):
@@ -45,10 +46,12 @@ try:
     gui.init()
     osc_client = udp_client.SimpleUDPClient("127.0.0.1", 9000)
     microsip = MicroSIP(config=cfg, gui=gui)
-    vrphone = VRPhone(config=cfg, gui=gui, microsip=microsip, osc_client=osc_client)
+    menu = Menu(config=cfg, gui=gui)
+    vrphone = VRPhone(config=cfg, gui=gui, microsip=microsip, osc_client=osc_client, menu=menu)
     dispatcher = Dispatcher()
     vrphone.map_parameters(dispatcher)
     microsip.setqueues(main_queue=vrphone.main_queue, output_queue=vrphone.output_queue)
+    menu.setqueues(main_queue=vrphone.main_queue, output_queue=vrphone.output_queue)
 
     #Callback API Init
     app = Flask(__name__)
@@ -77,7 +80,7 @@ try:
     #Start microsip HTTP callback API
     threading.Thread(target=start_callbackapi,
                      daemon=True).start()
-
+    menu.init()
     vrphone.run()
     gui.run()
 except KeyboardInterrupt:

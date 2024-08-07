@@ -3,16 +3,18 @@ from pythonosc import dispatcher
 from config import Config
 from gui import Gui
 from microsip import MicroSIP
+from menu import Menu
 import params
 import time
 import threading
 
 class VRPhone:
-    def __init__(self, config: Config, gui: Gui, microsip: MicroSIP, osc_client):
+    def __init__(self, config: Config, gui: Gui, microsip: MicroSIP, osc_client, menu: Menu):
         self.config = config
         self.gui = gui
         self.micropsip = microsip
         self.osc_client = osc_client
+        self.menu = menu
         self.input_queue: set = set()
         self.output_queue: set = set()
         self.main_queue: set = set()
@@ -36,17 +38,6 @@ class VRPhone:
             params.yes_button: ("yes_button", 1.0),
             params.no_button: ("no_button", 1.0)
         }
-        self.gui.on_toggle_interaction_clicked.add_listener(
-            self.toggle_interactions)
-
-    def handle_event(self, eventdata):
-        match eventdata[0]:
-            case "osc":
-                self.micropsip.update_osc_state(eventdata[1], eventdata[2])
-            case "interaction":
-                self.micropsip.run_phone_command(eventdata[1], eventdata[2])
-            case _:
-                print("Unknown event")
 
     def handle_event(self, eventdata):
         match eventdata[0]:
@@ -74,7 +65,7 @@ class VRPhone:
                     self.output_queue.discard((address, value))
             except RuntimeError:
                 pass
-            time.sleep(.05)
+            time.sleep(.025)
 
     def _input_worker(self):
         while True:
@@ -87,7 +78,7 @@ class VRPhone:
                     elif address in self.osc_bool_parameter_buttons:
                         button_type = self.osc_bool_parameter_buttons.get(address)[0]
                         button_timeout = time.time() + self.osc_bool_parameter_buttons.get(address)[1]
-                        self.main_queue.add(("menubutton", button_timeout, (address, button_type)))
+                        self.main_queue.add(("menubutton", None, (address, button_type, button_timeout)))
                     self.input_queue.discard(address)
             except RuntimeError:
                 pass
@@ -102,7 +93,7 @@ class VRPhone:
                             self.micropsip.run_phone_command(maintask[2][1], maintask[2][2])
                         case "menubutton":
                             if maintask[1] <= time.time():
-                                self.handle_menubutton_event(maintask[2][1], maintask[2][2])
+                                self.menu.handle_menubutton_event(maintask[2])
                             else:
                                 continue
                         case "microsip":
@@ -122,31 +113,13 @@ class VRPhone:
     def _menu_worker(self):
         while True:
             try:
-                for maintask in self.main_queue:
-                    match maintask[0]:
-                        case "interaction":
-                            self.micropsip.run_phone_command(maintask[2][1], maintask[2][2])
-                        case "menubutton":
-                            if maintask[1] <= time.time():
-                                self.handle_menubutton_event(maintask[2][1], maintask[2][2])
-                            else:
-                                continue
-                        case "microsip":
-                            self.micropsip.handle_microsip_feedback(maintask[2])
-                        case "event":
-                            if maintask[1] <= time.time():
-                                self.handle_event(maintask[2])
-                            else:
-                                continue
-                        case _:
-                            self.gui.print_terminal("Unknown task type in main queue.")
-                    self.main_queue.discard(maintask)
+                pass
             except RuntimeError:
                 pass
             time.sleep(.025)
 
     def osc_collision(self, address: str, *args):
-        if not self.is_paused and (self.last_interaction + self.config.get_by_key("interaction_timeout")) <= time.time():    
+        if not self.is_paused and (self.last_interaction + self.config.get_by_key("interaction_timeout")) <= time.time():
             if address in self.osc_bool_parameter_commands or address in self.osc_bool_parameter_buttons:
                 self.last_interaction = time.time()
                 if len(args) != 1:
@@ -161,8 +134,7 @@ class VRPhone:
         dispatcher.set_default_handler(self.osc_collision)
     
     def run(self):
+        self.gui.on_toggle_interaction_clicked.add_listener(self.toggle_interactions)
         threading.Thread(target=self._output_worker, daemon=True).start()
         threading.Thread(target=self._input_worker, daemon=True).start()
         threading.Thread(target=self._main_worker, daemon=True).start()
-        threading.Thread(target=self._menu_worker, daemon=True).start()
-

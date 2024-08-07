@@ -29,11 +29,151 @@ class Config:
             "max_call_time": 0,
             "max_ring_time": 10,
             "phonebook":  [
-                ["Lobby", "**1"],
-                ["First Floor", "**2"],
-                ["Support", "**3"],
-                ["Memes", "**4"]
-            ]
+                ["Lobby", "5229"],
+                ["Lobby2", "5230"],
+                ["Bark", "2275"],
+                ["Conference", "1111"]
+            ],
+            "phonemenu": {
+                "init_screen": "debug",
+                "dialogs": {
+                    "call_incoming":{
+                        "dialog": 0,
+                        "popup": 2,
+                        "choices": {
+                            "ok_button": ("call_accept", None),
+                            "cancel_button": ("call_hangup", None)
+                        }
+                    },
+                    "call_outgoing":{
+                        "dialog": 1,
+                        "popup": 2,
+                        "choices": {
+                            "cancel_button": ("call_hangup", None)
+                        }
+                    },
+                    "call_ended":{
+                        "dialog": 2,
+                        "popup": 0,
+                        "timeout": 2.0,
+                        "timeout_action": ("screen", "main"),
+                        "choices": {
+                            "ok_button": ("screen", "main"),
+                            "cancel_button": ("screen", "main")
+                        }
+                    },
+                    "call_busy":{
+                        "dialog": 2,
+                        "popup": 0,
+                        "timeout": 2.0,
+                        "timeout_action": ("screen", "main"),
+                        "choices": {
+                            "ok_button": ("screen", "main"),
+                            "cancel_button": ("screen", "main")
+                        }
+                    }
+                },
+                "screens": {
+                    "debug": {
+                        "screenid": 5,
+                        "loading_transition":  False,
+                        "selectors": {
+                            "selector1": True,
+                            "selector2": True,
+                            "selector3": True,
+                            "selector4": True
+                        },
+                        "choices": {
+                            "center_button": ("screen", "main")
+                        }
+                    },
+                    "screensaver": {
+                        "screenid": 5,
+                        "loading_transition":  False,
+                        "selectors": {
+                            "selector1": False,
+                            "selector2": False,
+                            "selector3": False,
+                            "selector4": False
+                        },
+                        "choices": {
+                            "center_button": ("screen", "main")
+                        }
+                    },
+                    "main": {
+                        "screenid": 1,
+                        "loading_transition":  True,
+                        "selectors": {
+                            "selector1": True,
+                            "selector2": False,
+                            "selector3": True,
+                            "selector4": True
+                        },
+                        "choices": {
+                            "yes_button": ("screen", "credits"),
+                            "no_button": ("screen", "secretmenu"),
+                            "ok_button": ("screen", "phonebook"),
+                            "cancel_button": ("screen", "conference")
+                        }
+                    },
+                    "phonebook": {
+                        "screenid": 2,
+                        "loading_transition":  True,
+                        "selectors": {
+                            "selector1": True,
+                            "selector2": True,
+                            "selector3": True,
+                            "selector4": True
+                        },
+                        "choices": {
+                            "yes_button": ("call_phonebook", 0),
+                            "no_button": ("call_phonebook", 1),
+                            "ok_button": ("call_phonebook", 2),
+                            "cancel_button": ("screen", "main")
+                        }
+                    },
+                    "conference": {
+                        "screenid": 2,
+                        "loading_transition":  True,
+                        "selectors": {
+                            "selector1": False,
+                            "selector2": False,
+                            "selector3": True,
+                            "selector4": True
+                        },
+                        "choices": {
+                            "ok_button": ("call_phonebook", 3),
+                            "cancel_button": ("screen", "main")
+                        }
+                    },
+                    "credits": {
+                        "screenid": 3,
+                        "loading_transition":  True,
+                        "selectors": {
+                            "selector1": False,
+                            "selector2": False,
+                            "selector3": False,
+                            "selector4": True
+                        },
+                        "choices": {
+                            "cancel_button": ("screen", "main")
+                        }
+                    },
+                    "secretmenu": {
+                        "screenid": 4,
+                        "loading_transition":  True,
+                        "selectors": {
+                            "selector1": False,
+                            "selector2": False,
+                            "selector3": False,
+                            "selector4": True
+                        },
+                        "choices": {
+                            "cancel_button": ("screen", "main")
+                        }
+                    }
+                }
+            }
         }
         self.current_config = None
 
