@@ -41,35 +41,35 @@ class Config:
                         "dialog": 0,
                         "popup": 2,
                         "choices": {
-                            "ok_button": ("call_accept", None),
-                            "cancel_button": ("call_hangup", None)
+                            "ok_button": ["call_accept", None],
+                            "cancel_button": ["call_hangup", None]
                         }
                     },
                     "call_outgoing":{
                         "dialog": 1,
                         "popup": 2,
                         "choices": {
-                            "cancel_button": ("call_hangup", None)
+                            "cancel_button": ["call_hangup", None]
                         }
                     },
                     "call_ended":{
                         "dialog": 2,
                         "popup": 0,
                         "timeout": 2.0,
-                        "timeout_action": ("screen", "main"),
+                        "timeout_action": ["screen", "main"],
                         "choices": {
-                            "ok_button": ("screen", "main"),
-                            "cancel_button": ("screen", "main")
+                            "ok_button": ["screen", "main"],
+                            "cancel_button": ["screen", "main"]
                         }
                     },
                     "call_busy":{
                         "dialog": 2,
                         "popup": 0,
                         "timeout": 2.0,
-                        "timeout_action": ("screen", "main"),
+                        "timeout_action": ["screen", "main"],
                         "choices": {
-                            "ok_button": ("screen", "main"),
-                            "cancel_button": ("screen", "main")
+                            "ok_button": ["screen", "main"],
+                            "cancel_button": ["screen", "main"]
                         }
                     }
                 },
@@ -84,7 +84,7 @@ class Config:
                             "selector4": True
                         },
                         "choices": {
-                            "center_button": ("screen", "main")
+                            "center_button": ["screen", "main"]
                         }
                     },
                     "screensaver": {
@@ -97,7 +97,7 @@ class Config:
                             "selector4": False
                         },
                         "choices": {
-                            "center_button": ("screen", "main")
+                            "center_button": ["screen", "main"]
                         }
                     },
                     "main": {
@@ -110,10 +110,10 @@ class Config:
                             "selector4": True
                         },
                         "choices": {
-                            "yes_button": ("screen", "credits"),
-                            "no_button": ("screen", "secretmenu"),
-                            "ok_button": ("screen", "phonebook"),
-                            "cancel_button": ("screen", "conference")
+                            "yes_button": ["screen", "credits"],
+                            "no_button": ["screen", "secretmenu"],
+                            "ok_button": ["screen", "phonebook"],
+                            "cancel_button": ["screen", "conference"]
                         }
                     },
                     "phonebook": {
@@ -126,10 +126,10 @@ class Config:
                             "selector4": True
                         },
                         "choices": {
-                            "yes_button": ("call_phonebook", 0),
-                            "no_button": ("call_phonebook", 1),
-                            "ok_button": ("call_phonebook", 2),
-                            "cancel_button": ("screen", "main")
+                            "yes_button": ["call_phonebook", 0],
+                            "no_button": ["call_phonebook", 1],
+                            "ok_button": ["call_phonebook", 2],
+                            "cancel_button": ["screen", "main"]
                         }
                     },
                     "conference": {
@@ -142,8 +142,8 @@ class Config:
                             "selector4": True
                         },
                         "choices": {
-                            "ok_button": ("call_phonebook", 3),
-                            "cancel_button": ("screen", "main")
+                            "ok_button": ["call_phonebook", 3],
+                            "cancel_button": ["screen", "main"]
                         }
                     },
                     "credits": {
@@ -156,7 +156,7 @@ class Config:
                             "selector4": True
                         },
                         "choices": {
-                            "cancel_button": ("screen", "main")
+                            "cancel_button": ["screen", "main"]
                         }
                     },
                     "secretmenu": {
@@ -169,7 +169,7 @@ class Config:
                             "selector4": True
                         },
                         "choices": {
-                            "cancel_button": ("screen", "main")
+                            "cancel_button": ["screen", "main"]
                         }
                     }
                 }
