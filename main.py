@@ -16,12 +16,12 @@ from gui import Gui
 
 
 class ReceiveCallback(Resource):
-    def get(self, command, caller_id):
-        vrphone.microsip_handler(microsip_cmd=command, caller_id=caller_id)
+    def get(self, command, caller):
+        vrphone.microsip_callback(command=command, caller=caller)
         return
 
-    def put(self, command, caller_id):
-        vrphone.microsip_handler(microsip_cmd=command, caller_id=caller_id)
+    def put(self, command, caller):
+        vrphone.microsip_callback(command=command, caller=caller)
         return
 
 def start_oscquery(server_udp_port, server_tcp_port):
@@ -30,7 +30,7 @@ def start_oscquery(server_udp_port, server_tcp_port):
         oscquery_server.advertise_endpoint("/avatar")
     return start_server
 
-def start_callbackapi() -> None:
+def start_callbackapi():
     serve(app, host="127.0.0.1", port=19001)
     return
 
@@ -44,7 +44,6 @@ try:
     gui.init()
     osc_client = udp_client.SimpleUDPClient("127.0.0.1", 9000)
     vrphone = VRPhone(config=cfg, gui=gui, osc_client=osc_client)
-    vrphone.init()
     dispatcher = Dispatcher()
     vrphone.map_parameters(dispatcher)
 
@@ -52,7 +51,7 @@ try:
     app = Flask(__name__)
     app.logger.setLevel(logging.ERROR)
     api = Api(app=app)
-    api.add_resource(ReceiveCallback, '/<string:command>/<string:caller_id>')
+    api.add_resource(ReceiveCallback, '/<string:command>/<string:caller>')
     
     server_udp_port = cfg.get_by_key("server_port")
 
@@ -75,18 +74,7 @@ try:
     #Start microsip HTTP callback API
     threading.Thread(target=start_callbackapi,
                      daemon=True).start()
-
-    #Start queue handlers
-    #Start VRC input handler
-    threading.Thread(target=vrphone.input_handler,
-                     daemon=True).start()
-    #Start VRC output handler
-    threading.Thread(target=vrphone.output_handler,
-                     daemon=True).start()
-
-    #Start vrphone main handler thread
-    threading.Thread(target=vrphone.main_handler,
-                     daemon=True).start()
+    vrphone.run()
     gui.run()
 except KeyboardInterrupt:
     print("Shutting Down...\n")

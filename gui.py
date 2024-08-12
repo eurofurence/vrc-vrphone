@@ -93,32 +93,12 @@ class Gui:
     def handle_clear_console_callback(self, sender, app_data):
         self.on_clear_console_clicked.dispatch(sender, app_data)
 
-    def handle_active_button_update(self, parameter):
-        element_name = self.parameter_to_button_element.get(parameter)
-        element_id = self.elements[element_name]
-        existing_element_label = self.button_labels[element_name]
-        result = "[" + existing_element_label + "]"
-        if element_id is not None:
-            dpg.configure_item(
-                element_id, label=result
-            )
-
-    def handle_active_button_reset(self):
-        for element_name in self.parameter_to_button_element.values():
-            element_id = self.elements[element_name]
-            label = self.button_labels[element_name]
-            if element_id is not None:
-                dpg.configure_item(
-                    element_id, label=label
-                )
-
     def handle_toggle_interactions_callback(self, sender, app_data):
         self.on_toggle_interaction_clicked.dispatch()
 
     def handle_input_change(self, sender, app_data):
         element = self.ids_to_elements.get(sender)
         config_key = self.element_to_config_key.get(element)
-        # this implies its an intensity
         if config_key is None:
             buttons_map = self.element_to_config_key.get("buttons")
             config_key = buttons_map.get(element)
@@ -165,17 +145,17 @@ class Gui:
 
         return resize_callback
 
-    def print_terminal(self, text: str) -> None:
+    def print_terminal(self, text: str):
         value = dpg.get_value(self.elements[Element.TERMINAL_WINDOW_INPUT])
         time = strftime("%d.%m %H:%M", gmtime())
         dpg.set_value(
             self.elements[Element.TERMINAL_WINDOW_INPUT], '[' + time + '] ' + text + '\n'  + value)
 
-    def on_clear_console(self, *args) -> None:
+    def on_clear_console(self, *args):
         dpg.set_value(
             self.elements[Element.TERMINAL_WINDOW_INPUT], "Cleared.")
 
-    def add_listeners(self) -> None:
+    def add_listeners(self):
         self.on_clear_console_clicked.add_listener(self.on_clear_console)
 
     def create_microsip_binary_input(self):

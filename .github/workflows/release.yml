@@ -10,7 +10,7 @@ defaults:
     shell: bash
 
 jobs:
-  build:
+  Build:
     name: Build release
     runs-on: windows-latest
 
@@ -29,40 +29,35 @@ jobs:
           pip install -r requirements.txt
 
       - name: Build with pyinstaller
-        run: pyinstaller --hidden-import zeroconf._utils.ipaddress --hidden-import zeroconf._handlers.answers --hidden-import=clr --add-data "./img/logo.png;img" --onefile --noconsole --distpath ./build --name=vrc-vrphone main.py
+        run: pyinstaller --hidden-import zeroconf._utils.ipaddress --hidden-import zeroconf._handlers.answers --hidden-import=clr --add-data "./img/logo.png;img" --noconsole --onefile --distpath ./build --name=vrc-vrphone main.py
 
       - name: Deploy EXE
         uses: actions/upload-artifact@v3
         with:
-          name: vrphone
+          name: vrc-vrphone
           path: ./build/vrc-vrphone.exe
           if-no-files-found: error
 
 
-  # release:
-  #   needs: build
-  #   permissions:
-  #     contents: write
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
+  release:
+    needs: Build
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
-  #     - uses: actions/download-artifact@v3
-  #       with:
-  #         name: vrc-vrphone
-  #         path: artifact/vrc-vrphone.exe
-
-  #     - uses: actions/download-artifact@v3
-  #       with:
-  #         name: VRC_VRPhone
-  #         path: artifact/VRC_VRPhone
+      - uses: actions/download-artifact@v3
+        with:
+          name: vrc-vrphone
+          path: artifact/vrc-vrphone
       
-  #     - name: Display structure of downloaded files
-  #       run: ls -R
-  #       working-directory: artifact
+      - name: Display structure of downloaded files
+        run: ls -R
+        working-directory: artifact
 
-  #     - uses: softprops/action-gh-release@v1
-  #       if: startsWith(github.ref, 'refs/tags/')
-  #       with:
-  #         files: |
-  #           artifact/vrc-vrphone/vrc-vrphone.exe
+      - uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            artifact/vrc-vrphone/vrc-vrphone.exe
