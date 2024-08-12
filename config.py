@@ -1,5 +1,4 @@
 import json
-import params
 import os
 
 def merge_dicts(dict1, dict2):
@@ -35,10 +34,10 @@ class Config:
                 ["Conference", "1111"]
             ],
             "phonemenu": {
-                "init_screen": "debug",
+                "init_screen": "screensaver",
                 "dialogs": {
                     "call_incoming":{
-                        "dialog": 0,
+                        "dialog": 1,
                         "popup": 2,
                         "choices": {
                             "ok_button": ["call_accept", None],
@@ -46,14 +45,14 @@ class Config:
                         }
                     },
                     "call_outgoing":{
-                        "dialog": 1,
+                        "dialog": 2,
                         "popup": 2,
                         "choices": {
                             "cancel_button": ["call_hangup", None]
                         }
                     },
                     "call_ended":{
-                        "dialog": 2,
+                        "dialog": 3,
                         "popup": 0,
                         "timeout": 2.0,
                         "timeout_action": ["screen", "main"],
@@ -63,7 +62,7 @@ class Config:
                         }
                     },
                     "call_busy":{
-                        "dialog": 2,
+                        "dialog": 4,
                         "popup": 0,
                         "timeout": 2.0,
                         "timeout_action": ["screen", "main"],
@@ -74,22 +73,9 @@ class Config:
                     }
                 },
                 "screens": {
-                    "debug": {
-                        "screenid": 5,
-                        "loading_transition":  False,
-                        "selectors": {
-                            "selector1": True,
-                            "selector2": True,
-                            "selector3": True,
-                            "selector4": True
-                        },
-                        "choices": {
-                            "center_button": ["screen", "main"]
-                        }
-                    },
                     "screensaver": {
-                        "screenid": 5,
-                        "loading_transition":  False,
+                        "screenid": 0,
+                        "loading_transition":  True,
                         "selectors": {
                             "selector1": False,
                             "selector2": False,
@@ -97,7 +83,8 @@ class Config:
                             "selector4": False
                         },
                         "choices": {
-                            "center_button": ["screen", "main"]
+                            "center_button": ["screen", "main"],
+                            "keypad_button": ["screen", "main"]
                         }
                     },
                     "main": {
@@ -133,7 +120,7 @@ class Config:
                         }
                     },
                     "conference": {
-                        "screenid": 2,
+                        "screenid": 3,
                         "loading_transition":  True,
                         "selectors": {
                             "selector1": False,
@@ -147,7 +134,7 @@ class Config:
                         }
                     },
                     "credits": {
-                        "screenid": 3,
+                        "screenid": 4,
                         "loading_transition":  True,
                         "selectors": {
                             "selector1": False,
@@ -160,7 +147,7 @@ class Config:
                         }
                     },
                     "secretmenu": {
-                        "screenid": 4,
+                        "screenid": 5,
                         "loading_transition":  True,
                         "selectors": {
                             "selector1": False,

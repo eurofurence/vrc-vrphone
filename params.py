@@ -8,7 +8,7 @@ phonebook_entry_3_button = "/avatar/parameters/vrphone_phonebook_entry_3_button"
 phonebook_entry_4_button = "/avatar/parameters/vrphone_phonebook_entry_4_button"
 
 #New Interface buttons
-keypad_button = "/avatar/parameters/vrphone_keypad_button"
+keypad_button = "/avatar/parameters/vrphone_keypad_enter_button"
 ok_button = "/avatar/parameters/vrphone_ok_button"
 cancel_button = "/avatar/parameters/vrphone_cancel_button"
 yes_button = "/avatar/parameters/vrphone_yes_button"
