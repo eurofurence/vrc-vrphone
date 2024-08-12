@@ -16,15 +16,6 @@ yes_button = "/avatar/parameters/vrphone_yes_button"
 no_button = "/avatar/parameters/vrphone_no_button"
 center_button = "/avatar/parameters/vrphone_center_button"
 
-#Outputs to use as indicators
-call_started = "/avatar/parameters/vrphone_call_started"
-call_ended = "/avatar/parameters/vrphone_call_ended"
-call_incoming = "/avatar/parameters/vrphone_call_incoming"
-call_outgoing = "/avatar/parameters/vrphone_call_outgoing"
-call_answered = "/avatar/parameters/vrphone_call_answered"
-call_ring = "/avatar/parameters/vrphone_call_ring"
-call_busy = "/avatar/parameters/vrphone_call_busy"
-
 #Shape Key Menu Control
 show_screen = "/avatar/parameters/ActiveScreen"
 show_dialog = "/avatar/parameters/ActiveDialog"

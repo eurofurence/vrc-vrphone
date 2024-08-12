@@ -13,7 +13,7 @@ class Menu:
         self.active_screen: str = ""
         self.active_dialog: str = ""
         self.active_mode = 0
-        self.verbose = True
+        self.call_start_time: float = float()
         self.osc_integer_parameters: dict[str, str] = {
             "screen": params.show_screen,
             "dialog": params.show_dialog,
@@ -26,17 +26,17 @@ class Menu:
             "selector4": params.show_selection4
         }
         self.microsip_dialog_mapping: dict[str, tuple] = {
-            "cmdCallEnd": ("call_ended", params.call_ended),
-            "cmdIncomingCall": ("call_incoming", params.call_incoming),
-            "cmdOutgoingCall": ("call_outgoing", params.call_outgoing),
-            "cmdCallStart": ("call_started", params.call_started),
+            "cmdCallEnd": "call_ended",
+            "cmdIncomingCall": "call_incoming",
+            "cmdOutgoingCall": "call_outgoing",
+            "cmdCallStart": "call_started",
         }
 
     def _initmenu(self):
         screen = self.config.get_by_key("phonemenu")["init_screen"]
         self._switch_screen(screen)
         self._reset_dialogs()
-        self.gui.print_terminal("Menu initialized, starting screen: {}".format(screen))
+        self.gui.print_terminal("log_verbose: Ingame menu initialized") if self.config.get_by_key("log_verbose") else None
 
     def _reset_dialogs(self):
         self.active_mode = 0
@@ -49,6 +49,12 @@ class Menu:
                 )
 
     def _switch_screen(self, screen):
+        self.gui.print_terminal("log_verbose: Switching screen to: {}".format(screen)) if self.config.get_by_key("log_verbose") else None
+        if self.config.get_by_key("phonemenu")["screens"][screen]["transition"]:
+            self.active_mode = 2
+            self.osc_client.send_message(self.osc_integer_parameters.get("popup"), self.config.get_by_key("phonemenu")["transition_popup"])
+            time.sleep(self.config.get_by_key("interaction_timeout"))
+            self.osc_client.send_message(self.osc_integer_parameters.get("popup"), 0)
         self.active_screen = screen
         self.active_mode = 0
         self.osc_client.send_message(self.osc_integer_parameters.get("screen"), self.config.get_by_key("phonemenu")["screens"][screen]["screenid"])
@@ -59,6 +65,7 @@ class Menu:
                 )
             
     def _show_dialog(self, dialog):
+        self.gui.print_terminal("log_verbose: Showing dialog: {}".format(dialog)) if self.config.get_by_key("log_verbose") else None
         self.active_dialog = dialog
         self.active_mode = 1
         self.osc_client.send_message(self.osc_integer_parameters.get("dialog"), self.config.get_by_key("phonemenu")["dialogs"][dialog]["dialog"])
@@ -70,6 +77,7 @@ class Menu:
                 )
 
     def _redraw(self):
+        self.gui.print_terminal("log_verbose: Redrawing screen") if self.config.get_by_key("log_verbose") else None
         self.osc_client.send_message(self.osc_integer_parameters.get("screen"), self.config.get_by_key("phonemenu")["screens"][self.active_screen]["screenid"])
         for selector in self.config.get_by_key("phonemenu")["screens"][self.active_screen]["selectors"]:
             self.osc_client.send_message(
@@ -79,6 +87,9 @@ class Menu:
         if self.active_mode == 1:
             self.osc_client.send_message(self.osc_integer_parameters.get("dialog"), self.config.get_by_key("phonemenu")["dialogs"][self.active_dialog]["dialog"])
             self.osc_client.send_message(self.osc_integer_parameters.get("popup"), self.config.get_by_key("phonemenu")["dialogs"][self.active_dialog]["popup"])
+        if self.active_mode == 2:
+            self.osc_client.send_message(self.osc_integer_parameters.get("dialog"), 0)
+            self.osc_client.send_message(self.osc_integer_parameters.get("popup"), self.config.get_by_key("phonemenu")["transition_popup"])
 
     def _handle_choices(self, choice):
         match choice[0]:
@@ -113,15 +124,21 @@ class Menu:
     def handle_callback_input(self, command, caller):
         match command:
             case "cmdCallEnd" | "cmdCallBusy":
-                self._show_dialog(self.microsip_dialog_mapping.get("cmdCallEnd")[0])
-                time.sleep(2)
+                self.gui.print_terminal("Call with #{} ended after {} seconds".format(caller,int(time.time() - self.call_start_time)))
+                self._show_dialog(self.microsip_dialog_mapping.get("cmdCallEnd"))
+                time.sleep(self.config.get_by_key("interaction_timeout"))
                 self._reset_dialogs()
             case "cmdOutgoingCall":
-                self._show_dialog(self.microsip_dialog_mapping.get("cmdOutgoingCall")[0])
+                self.call_start_time = time.time()
+                self.gui.print_terminal("Outgoing call to #{}".format(caller))
+                self._show_dialog(self.microsip_dialog_mapping.get("cmdOutgoingCall"))
             case "cmdIncomingCall":
-                self._show_dialog(self.microsip_dialog_mapping.get("cmdIncomingCall")[0])
+                self.call_start_time = time.time()
+                self.gui.print_terminal("Incoming call from #{}".format(caller))
+                self._show_dialog(self.microsip_dialog_mapping.get("cmdIncomingCall"))
             case "cmdCallStart":
-                self._show_dialog(self.microsip_dialog_mapping.get("cmdCallStart")[0])
+                self.gui.print_terminal("Call with #{} started".format(caller))
+                self._show_dialog(self.microsip_dialog_mapping.get("cmdCallStart"))
             case _:
                 return
 

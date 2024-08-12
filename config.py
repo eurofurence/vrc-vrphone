@@ -12,14 +12,13 @@ def merge_dicts(dict1, dict2):
             dict1[k] = dict2[k]
     return dict1
 
-
 class Config:
     def __init__(self):
         appdata_path = os.environ.get('LOCALAPPDATA')
-        microsip_binary = os.path.join(appdata_path, "MicroSIP\microsip.exe")
+        microsip_binary = os.path.join(appdata_path, "MicroSIP\\microsip.exe")
         self.APP_NAME = 'VRChatVRPhone'
         self.default_config = {
-            "use_oscquery": True,
+            "use_oscquery": False,
             "server_port": 9001,
             "microsip_binary": microsip_binary,
             "call_autoanswer": False,
@@ -27,6 +26,7 @@ class Config:
             "interaction_timeout": 2,
             "max_call_time": 0,
             "max_ring_time": 10,
+            "log_verbose": False,
             "phonebook":  [
                 ["Lobby", "5229"],
                 ["Lobby2", "5230"],
@@ -35,6 +35,7 @@ class Config:
             ],
             "phonemenu": {
                 "init_screen": "screensaver",
+                "transition_popup": 3,
                 "dialogs": {
                     "call_incoming":{
                         "dialog": 1,
@@ -70,7 +71,7 @@ class Config:
                 "screens": {
                     "screensaver": {
                         "screenid": 0,
-                        "loading_transition":  True,
+                        "transition":  True,
                         "selectors": {
                             "selector1": False,
                             "selector2": False,
@@ -84,7 +85,7 @@ class Config:
                     },
                     "main": {
                         "screenid": 1,
-                        "loading_transition":  True,
+                        "transition":  True,
                         "selectors": {
                             "selector1": True,
                             "selector2": False,
@@ -100,7 +101,7 @@ class Config:
                     },
                     "phonebook": {
                         "screenid": 2,
-                        "loading_transition":  True,
+                        "transition":  True,
                         "selectors": {
                             "selector1": True,
                             "selector2": True,
@@ -116,7 +117,7 @@ class Config:
                     },
                     "conference": {
                         "screenid": 3,
-                        "loading_transition":  True,
+                        "transition":  True,
                         "selectors": {
                             "selector1": False,
                             "selector2": False,
@@ -130,7 +131,7 @@ class Config:
                     },
                     "credits": {
                         "screenid": 4,
-                        "loading_transition":  True,
+                        "transition":  True,
                         "selectors": {
                             "selector1": False,
                             "selector2": False,
@@ -143,7 +144,7 @@ class Config:
                     },
                     "secretmenu": {
                         "screenid": 5,
-                        "loading_transition":  True,
+                        "transition":  True,
                         "selectors": {
                             "selector1": False,
                             "selector2": False,

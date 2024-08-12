@@ -18,7 +18,6 @@ class VRPhone:
         self.input_queue: set = set()
         self.last_interactions: dict = dict()
         self.is_paused = False
-        self.verbose = False
         self.avatar_change_input = params.avatar_change
         self.osc_bool_inputs: dict[str, tuple] = {
             params.receiver_button: ("interaction", "answer", None),
@@ -61,7 +60,7 @@ class VRPhone:
                     self.input_queue.discard(address)
             except RuntimeError:
                 pass
-            time.sleep(.05)
+            time.sleep(.025)
 
     def osc_collision(self, address: str, *args):
         if address == self.avatar_change_input:
@@ -80,14 +79,14 @@ class VRPhone:
                     self.input_queue.add(address)
                     self.last_interactions[address] = time.time()
 
-    def microsip_callback(self, microsip_cmd: str, caller_id: str):
-        self.menu.handle_callback_input(microsip_cmd, caller_id)
+    def microsip_callback(self, command: str, caller: str):
+        self.menu.handle_callback_input(command, caller)
 
     def map_parameters(self, dispatcher: dispatcher.Dispatcher):
         dispatcher.set_default_handler(self.osc_collision)
 
     def avatar_change(self):
-        self.gui.print_terminal("Avatar change, redrawing menu")
+        self.gui.print_terminal("Avatar change detected")
         self.menu._redraw()
 
     def run(self):

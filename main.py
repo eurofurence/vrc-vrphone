@@ -16,12 +16,12 @@ from gui import Gui
 
 
 class ReceiveCallback(Resource):
-    def get(self, command, caller_id):
-        vrphone.microsip_callback(microsip_cmd=command, caller_id=caller_id)
+    def get(self, command, caller):
+        vrphone.microsip_callback(command=command, caller=caller)
         return
 
-    def put(self, command, caller_id):
-        vrphone.microsip_callback(microsip_cmd=command, caller_id=caller_id)
+    def put(self, command, caller):
+        vrphone.microsip_callback(command=command, caller=caller)
         return
 
 def start_oscquery(server_udp_port, server_tcp_port):
@@ -51,7 +51,7 @@ try:
     app = Flask(__name__)
     app.logger.setLevel(logging.ERROR)
     api = Api(app=app)
-    api.add_resource(ReceiveCallback, '/<string:command>/<string:caller_id>')
+    api.add_resource(ReceiveCallback, '/<string:command>/<string:caller>')
     
     server_udp_port = cfg.get_by_key("server_port")
 

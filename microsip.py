@@ -1,6 +1,5 @@
 from config import Config
 from gui import Gui
-import params
 import subprocess
 
 class MicroSIP:
@@ -9,21 +8,28 @@ class MicroSIP:
         self.gui = gui
 
     def run_phone_command(self, command, args = None):
-        self.gui.print_terminal("Microsip command: {} args: {}".format(command, args))
+        self.gui.print_terminal("Microsip: Running command: {} args: {}".format(command, args)) if self.config.get_by_key("log_verbose") else None
         match command:
             case "answer":
+                self.gui.print_terminal("Microsip: Answering call")
                 self.call_answer()
             case "hangup":
+                self.gui.print_terminal("Microsip: Hangup call")
                 self.call_hangup()
             case "hangupcalling":
+                self.gui.print_terminal("Microsip: Hangup outgoing call")
                 self.call_hangup(command)
             case "hangupincoming":
+                self.gui.print_terminal("Microsip: Hangup incoming call")
                 self.call_hangup(command)
             case "phonebook":
+                self.gui.print_terminal("Microsip: Call phonebook entry #{}".format(args+1))
                 self.call_phonebook_entry(args)
             case "dtmf":
+                self.gui.print_terminal("Microsip: Send DTMF sequence: {}".format(args))
                 self.send_dtmf(args)
             case "transfer":
+                self.gui.print_terminal("Microsip: Transfer call to: {}".format(args))
                 self.call_transfer(args)
 
     def call_answer(self):
@@ -45,9 +51,6 @@ class MicroSIP:
     def call_phonebook_entry(self, entry):
         for p, (name, number) in enumerate(self.config.get_by_key("phonebook")):
             if p == entry:
-                self.gui.print_terminal(
-                        "Call phone book entry #{} {} {}".format(p+1, name, number)
-                )
                 return self.execute_microsip_command(number)
 
     def execute_microsip_command(self, parameter: str):
