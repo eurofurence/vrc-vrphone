@@ -13,14 +13,15 @@ class VRPhone:
         self.config = config
         self.gui = gui
         self.osc_client = osc_client
-        self.microsip = MicroSIP(config=self.config, gui=self.gui, osc_client=self.osc_client)
+        self.microsip = MicroSIP(config=self.config, gui=self.gui)
         self.menu = Menu(config=self.config, gui=self.gui, osc_client=self.osc_client, microsip=self.microsip)
         self.input_queue: set = set()
         self.last_interactions: dict = dict()
         self.is_paused = False
         self.verbose = False
+        self.avatar_change_input = params.avatar_change
         self.osc_bool_inputs: dict[str, tuple] = {
-            params.receiver_button: ("interaction", "receiver", None),
+            params.receiver_button: ("interaction", "answer", None),
             params.pickup_button: ("interaction", "answer", None),
             params.hangup_button: ("interaction", "hangup", None),
             params.phonebook_entry_1_button: ("interaction", "phonebook", 0),
@@ -63,6 +64,9 @@ class VRPhone:
             time.sleep(.05)
 
     def osc_collision(self, address: str, *args):
+        if address == self.avatar_change_input:
+            self.avatar_change()
+            return
         if not self.is_paused:
             if address in self.osc_bool_inputs:
                 if address in self.last_interactions and (self.last_interactions[address] + self.config.get_by_key("interaction_timeout")) > time.time():
@@ -74,13 +78,18 @@ class VRPhone:
                     return
                 if was_entered and address not in self.input_queue:
                     self.input_queue.add(address)
+                    self.last_interactions[address] = time.time()
 
     def microsip_callback(self, microsip_cmd: str, caller_id: str):
         self.menu.handle_callback_input(microsip_cmd, caller_id)
 
     def map_parameters(self, dispatcher: dispatcher.Dispatcher):
         dispatcher.set_default_handler(self.osc_collision)
-    
+
+    def avatar_change(self):
+        self.gui.print_terminal("Avatar change, redrawing menu")
+        self.menu._redraw()
+
     def run(self):
         self.menu.init()
         self.gui.on_toggle_interaction_clicked.add_listener(self.toggle_interactions)

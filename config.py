@@ -54,21 +54,16 @@ class Config:
                     "call_ended":{
                         "dialog": 3,
                         "popup": 0,
-                        "timeout": 2.0,
-                        "timeout_action": ["screen", "main"],
                         "choices": {
                             "ok_button": ["screen", "main"],
                             "cancel_button": ["screen", "main"]
                         }
                     },
-                    "call_busy":{
+                    "call_started":{
                         "dialog": 4,
-                        "popup": 0,
-                        "timeout": 2.0,
-                        "timeout_action": ["screen", "main"],
+                        "popup": 2,
                         "choices": {
-                            "ok_button": ["screen", "main"],
-                            "cancel_button": ["screen", "main"]
+                            "cancel_button": ["call_hangup", None]
                         }
                     }
                 },

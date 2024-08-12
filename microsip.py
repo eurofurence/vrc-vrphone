@@ -4,24 +4,12 @@ import params
 import subprocess
 
 class MicroSIP:
-    def __init__(self, config: Config, gui: Gui, osc_client):
+    def __init__(self, config: Config, gui: Gui):
         self.config = config
         self.gui = gui
-        self.osc_client = osc_client
-        self.call_active = False
-        self.call_outgoing = False
-        self.call_incoming = False
-        self.microsip_state_parameters: dict[str, tuple] = {
-            "cmdCallStart": ("Call started", params.call_started),
-            "cmdCallEnd": ("Call ended", params.call_ended),
-            "cmdIncomingCall": ("Call incoming", params.call_incoming),
-            "cmdOutgoingCall": ("Call outgoing", params.call_outgoing),
-            "cmdCallAnswer": ("Call answered", params.call_answered),
-            "cmdCallRing": ("Phone ringing (Ring ring ring... VR Phone)", params.call_ring),
-            "cmdCallBusy": ("Busy signal", params.call_busy),
-        }
 
     def run_phone_command(self, command, args = None):
+        self.gui.print_terminal("Microsip command: {} args: {}".format(command, args))
         match command:
             case "answer":
                 self.call_answer()
@@ -37,18 +25,6 @@ class MicroSIP:
                 self.send_dtmf(args)
             case "transfer":
                 self.call_transfer(args)
-    
-    def update_osc_state(self, tasktype, parameter = None):
-        match tasktype:
-            case "set":
-                self.osc_client.send_message(parameter, True)
-            case "reset":
-                self.osc_client.send_message(parameter, False)
-            case "resetall":
-                for cmd in self.microsip_state_parameters:
-                    self.osc_client.send_message(self.microsip_state_parameters.get(cmd)[1], False)
-            case _:
-                self.gui.print_terminal("Unknown OSC event: {}".format(tasktype))
 
     def call_answer(self):
         result = self.execute_microsip_command("/answer")

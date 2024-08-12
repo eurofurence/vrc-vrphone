@@ -1,3 +1,4 @@
+avatar_change = "/avatar/change"
 #Old direct command buttons
 receiver_button = "/avatar/parameters/vrphone_receiver_button"
 pickup_button = "/avatar/parameters/vrphone_pickup_button"

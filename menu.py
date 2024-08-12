@@ -29,7 +29,7 @@ class Menu:
             "cmdCallEnd": ("call_ended", params.call_ended),
             "cmdIncomingCall": ("call_incoming", params.call_incoming),
             "cmdOutgoingCall": ("call_outgoing", params.call_outgoing),
-            "cmdCallBusy": ("call_busy", params.call_busy),
+            "cmdCallStart": ("call_started", params.call_started),
         }
 
     def _initmenu(self):
@@ -42,12 +42,16 @@ class Menu:
         self.active_mode = 0
         self.osc_client.send_message(self.osc_integer_parameters.get("dialog"), 0)
         self.osc_client.send_message(self.osc_integer_parameters.get("popup"), 0)
+        for selector in self.config.get_by_key("phonemenu")["screens"][self.active_screen]["selectors"]:
+            self.osc_client.send_message(
+                self.osc_bool_parameters.get(selector),
+                self.config.get_by_key("phonemenu")["screens"][self.active_screen]["selectors"][selector]
+                )
 
     def _switch_screen(self, screen):
-        screenid = self.config.get_by_key("phonemenu")["screens"][screen]["screenid"]
         self.active_screen = screen
         self.active_mode = 0
-        self.osc_client.send_message(self.osc_integer_parameters.get("screen"), screenid)
+        self.osc_client.send_message(self.osc_integer_parameters.get("screen"), self.config.get_by_key("phonemenu")["screens"][screen]["screenid"])
         for selector in self.config.get_by_key("phonemenu")["screens"][screen]["selectors"]:
             self.osc_client.send_message(
                 self.osc_bool_parameters.get(selector),
@@ -57,26 +61,25 @@ class Menu:
     def _show_dialog(self, dialog):
         self.active_dialog = dialog
         self.active_mode = 1
-        dialogid = self.config.get_by_key("phonemenu")["dialogs"][dialog]["dialog"]
-        popupid = self.config.get_by_key("phonemenu")["dialogs"][dialog]["popup"]
-        self.osc_client.send_message(self.osc_integer_parameters.get("dialog"), dialogid)
-        self.osc_client.send_message(self.osc_integer_parameters.get("popup"), popupid)
-
-    def _redraw(self):
-        screen = self.active_screen
-        screenid = self.config.get_by_key("phonemenu")["screens"][screen]["screenid"]
-        dialog = self.active_dialog
-        dialogid = self.config.get_by_key("phonemenu")["dialogs"][dialog]["dialog"]
-        popupid = self.config.get_by_key("phonemenu")["dialogs"][dialog]["popup"]
-        self.osc_client.send_message(self.osc_integer_parameters.get("screen"), screenid)
-        self.osc_client.send_message(self.osc_integer_parameters.get("dialog"), dialogid)
-        self.osc_client.send_message(self.osc_integer_parameters.get("popup"), popupid)
-        for selector in self.config.get_by_key("phonemenu")["screens"][screen]["selectors"]:
+        self.osc_client.send_message(self.osc_integer_parameters.get("dialog"), self.config.get_by_key("phonemenu")["dialogs"][dialog]["dialog"])
+        self.osc_client.send_message(self.osc_integer_parameters.get("popup"), self.config.get_by_key("phonemenu")["dialogs"][dialog]["popup"])
+        for selector in self.config.get_by_key("phonemenu")["screens"][self.active_screen]["selectors"]:
             self.osc_client.send_message(
                 self.osc_bool_parameters.get(selector),
-                self.config.get_by_key("phonemenu")["screens"][screen]["selectors"][selector]
+                False
                 )
-            
+
+    def _redraw(self):
+        self.osc_client.send_message(self.osc_integer_parameters.get("screen"), self.config.get_by_key("phonemenu")["screens"][self.active_screen]["screenid"])
+        for selector in self.config.get_by_key("phonemenu")["screens"][self.active_screen]["selectors"]:
+            self.osc_client.send_message(
+                self.osc_bool_parameters.get(selector),
+                self.config.get_by_key("phonemenu")["screens"][self.active_screen]["selectors"][selector]
+                )
+        if self.active_mode == 1:
+            self.osc_client.send_message(self.osc_integer_parameters.get("dialog"), self.config.get_by_key("phonemenu")["dialogs"][self.active_dialog]["dialog"])
+            self.osc_client.send_message(self.osc_integer_parameters.get("popup"), self.config.get_by_key("phonemenu")["dialogs"][self.active_dialog]["popup"])
+
     def _handle_choices(self, choice):
         match choice[0]:
             case "screen":
@@ -103,21 +106,22 @@ class Menu:
                 self._handle_choices(choice)
             else:
                 return
+        elif self.active_mode == 2:
+            #Loading transition mode, we don't accept input here
+            return
             
     def handle_callback_input(self, command, caller):
         match command:
-            case "cmdCallEnd":
-                self._show_dialog(self.microsip_dialog_mapping.get(command)[0])
+            case "cmdCallEnd" | "cmdCallBusy":
+                self._show_dialog(self.microsip_dialog_mapping.get("cmdCallEnd")[0])
                 time.sleep(2)
                 self._reset_dialogs()
             case "cmdOutgoingCall":
-                self._show_dialog(self.microsip_dialog_mapping.get(command)[0])
+                self._show_dialog(self.microsip_dialog_mapping.get("cmdOutgoingCall")[0])
             case "cmdIncomingCall":
-                self._show_dialog(self.microsip_dialog_mapping.get(command)[0])
-            case "cmdCallBusy":
-                self._show_dialog(self.microsip_dialog_mapping.get(command)[0])
-                time.sleep(2)
-                self._reset_dialogs()
+                self._show_dialog(self.microsip_dialog_mapping.get("cmdIncomingCall")[0])
+            case "cmdCallStart":
+                self._show_dialog(self.microsip_dialog_mapping.get("cmdCallStart")[0])
             case _:
                 return
 
