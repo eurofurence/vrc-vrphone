@@ -1,7 +1,5 @@
 import json
-import params
 import os
-import json
 
 def merge_dicts(dict1, dict2):
     """ Recursively merges dict2 into dict1 """
@@ -14,24 +12,151 @@ def merge_dicts(dict1, dict2):
             dict1[k] = dict2[k]
     return dict1
 
-
 class Config:
     def __init__(self):
         appdata_path = os.environ.get('LOCALAPPDATA')
-        microsip_binary = os.path.join(appdata_path, "MicroSIP\microsip.exe")
+        microsip_binary = os.path.join(appdata_path, "MicroSIP\\microsip.exe")
         self.APP_NAME = 'VRChatVRPhone'
         self.default_config = {
-            "use_oscquery": True,
+            "use_oscquery": False,
             "server_port": 9001,
             "microsip_binary": microsip_binary,
             "call_autoanswer": False,
-            "interaction_timeout": 2.0,
+            "callback_port": 19001,
+            "interaction_timeout": 2,
+            "max_call_time": 0,
+            "max_ring_time": 10,
+            "log_verbose": False,
             "phonebook":  [
-                ("Lobby", "**1"),
-                ("First Floor", "**2"),
-                ("Support", "**3"),
-                ("Memes", "**4")
-            ]
+                ["Lobby", "5229"],
+                ["Lobby2", "5230"],
+                ["Bark", "2275"],
+                ["Conference", "1111"]
+            ],
+            "phonemenu": {
+                "init_screen": "screensaver",
+                "transition_popup": 3,
+                "dialogs": {
+                    "call_incoming":{
+                        "dialog": 1,
+                        "popup": 2,
+                        "choices": {
+                            "ok_button": ["call_accept", None],
+                            "cancel_button": ["call_hangup", None]
+                        }
+                    },
+                    "call_outgoing":{
+                        "dialog": 2,
+                        "popup": 2,
+                        "choices": {
+                            "cancel_button": ["call_hangup", None]
+                        }
+                    },
+                    "call_ended":{
+                        "dialog": 3,
+                        "popup": 0,
+                        "choices": {
+                            "ok_button": ["screen", "main"],
+                            "cancel_button": ["screen", "main"]
+                        }
+                    },
+                    "call_started":{
+                        "dialog": 4,
+                        "popup": 2,
+                        "choices": {
+                            "cancel_button": ["call_hangup", None]
+                        }
+                    }
+                },
+                "screens": {
+                    "screensaver": {
+                        "screenid": 0,
+                        "transition":  True,
+                        "selectors": {
+                            "selector1": False,
+                            "selector2": False,
+                            "selector3": False,
+                            "selector4": False
+                        },
+                        "choices": {
+                            "center_button": ["screen", "main"],
+                            "keypad_button": ["screen", "main"]
+                        }
+                    },
+                    "main": {
+                        "screenid": 1,
+                        "transition":  True,
+                        "selectors": {
+                            "selector1": True,
+                            "selector2": False,
+                            "selector3": True,
+                            "selector4": True
+                        },
+                        "choices": {
+                            "yes_button": ["screen", "credits"],
+                            "no_button": ["screen", "secretmenu"],
+                            "ok_button": ["screen", "phonebook"],
+                            "cancel_button": ["screen", "conference"]
+                        }
+                    },
+                    "phonebook": {
+                        "screenid": 2,
+                        "transition":  True,
+                        "selectors": {
+                            "selector1": True,
+                            "selector2": True,
+                            "selector3": True,
+                            "selector4": True
+                        },
+                        "choices": {
+                            "yes_button": ["call_phonebook", 0],
+                            "no_button": ["call_phonebook", 1],
+                            "ok_button": ["call_phonebook", 2],
+                            "cancel_button": ["screen", "main"]
+                        }
+                    },
+                    "conference": {
+                        "screenid": 3,
+                        "transition":  True,
+                        "selectors": {
+                            "selector1": False,
+                            "selector2": False,
+                            "selector3": True,
+                            "selector4": True
+                        },
+                        "choices": {
+                            "ok_button": ["call_phonebook", 3],
+                            "cancel_button": ["screen", "main"]
+                        }
+                    },
+                    "credits": {
+                        "screenid": 4,
+                        "transition":  True,
+                        "selectors": {
+                            "selector1": False,
+                            "selector2": False,
+                            "selector3": False,
+                            "selector4": True
+                        },
+                        "choices": {
+                            "cancel_button": ["screen", "main"]
+                        }
+                    },
+                    "secretmenu": {
+                        "screenid": 5,
+                        "transition":  True,
+                        "selectors": {
+                            "selector1": False,
+                            "selector2": False,
+                            "selector3": False,
+                            "selector4": True
+                        },
+                        "choices": {
+                            "cancel_button": ["screen", "main"]
+                        }
+                    }
+                }
+            }
         }
         self.current_config = None
 

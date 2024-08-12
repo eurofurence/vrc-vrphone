@@ -2,54 +2,38 @@
 from pythonosc import dispatcher
 from config import Config
 from gui import Gui
+from microsip import MicroSIP
+from menu import Menu
 import params
 import time
-import subprocess
+import threading
 
 class VRPhone:
-    def __init__(self, config: Config, gui: Gui):
+    def __init__(self, config: Config, gui: Gui, osc_client):
         self.config = config
         self.gui = gui
-        self.active_interactions: set = set()
-        self.call_active = False
+        self.osc_client = osc_client
+        self.microsip = MicroSIP(config=self.config, gui=self.gui)
+        self.menu = Menu(config=self.config, gui=self.gui, osc_client=self.osc_client, microsip=self.microsip)
+        self.input_queue: set = set()
+        self.last_interactions: dict = dict()
         self.is_paused = False
-        self.osc_input_parameters: dict[str, tuple] = {
-            params.receiver_button: ("receiver", None),
-            params.phonebook_entry_1_button: ("phonebook", 0),
-            params.phonebook_entry_2_button: ("phonebook", 1),
-            params.phonebook_entry_3_button: ("phonebook", 2),
-            params.phonebook_entry_4_button: ("phonebook", 3)
+        self.avatar_change_input = params.avatar_change
+        self.osc_bool_inputs: dict[str, tuple] = {
+            params.receiver_button: ("interaction", "answer", None),
+            params.pickup_button: ("interaction", "answer", None),
+            params.hangup_button: ("interaction", "hangup", None),
+            params.phonebook_entry_1_button: ("interaction", "phonebook", 0),
+            params.phonebook_entry_2_button: ("interaction", "phonebook", 1),
+            params.phonebook_entry_3_button: ("interaction", "phonebook", 2),
+            params.phonebook_entry_4_button: ("interaction", "phonebook", 3),
+            params.keypad_button: ("menubutton", "keypad_button", 1.0),
+            params.center_button: ("menubutton", "center_button", 1.0),
+            params.ok_button: ("menubutton", "ok_button", 1.0),
+            params.cancel_button: ("menubutton", "cancel_button", 1.0),
+            params.yes_button: ("menubutton", "yes_button", 1.0),
+            params.no_button: ("menubutton", "no_button", 1.0)
         }
-        self.parameters_to_types: dict[str, tuple] = {
-            value: key for key, value in self.osc_input_parameters.items()}
-
-    def handle_receiver_button(self):
-        if self.call_active:
-            self.gui.print_terminal(
-                "Call hangup"
-            )
-            command = "/hangupall"
-        else:
-            self.gui.print_terminal(
-                "Call answered"
-            )
-            command = "/answer"
-        self.call_active = not self.call_active
-        return self.execute_microsip_command(command)
-
-    def handle_phonebook_entry(self, entry):
-        if not self.call_active:
-            for p, (name, number) in enumerate(self.config.get_by_key("phonebook")):
-                if p == entry:
-                    self.gui.print_terminal(
-                            "Call phone book entry #{} {} {}".format(p, name, number)
-                    )
-                    self.call_active = True
-                    return self.execute_microsip_command(number)
-        else:
-            self.gui.print_terminal(
-                    "Call already active, ignoring phone book button action"
-            )
 
     def toggle_interactions(self):
         self.is_paused = not self.is_paused
@@ -60,56 +44,52 @@ class VRPhone:
             self.gui.print_terminal(
                 "Interactions Continued.")
 
-    def execute_microsip_command(self, parameter: str):
-        microsip_binary = self.config.get_by_key("microsip_binary")
-        command = subprocess.run([microsip_binary, parameter])
-        return command
-
-    def watch(self) -> None:
+    def _input_worker(self):
         while True:
             try:
-                self.gui.handle_active_button_reset()
-                if len(self.active_interactions) > 0 and not self.is_paused:
-                    commands = []
-                    for interaction in self.active_interactions:
-                        interaction_type = self.osc_input_parameters.get(interaction)[0]
-                        interaction_args = self.osc_input_parameters.get(interaction)[1]
-                        if interaction_type == "receiver" or interaction_type == "button":
-                            self.gui.handle_active_button_update(
-                                parameter=interaction)
-                        commands.append((interaction, interaction_type, interaction_args))
-                    if len(commands) > 0:
-                        for command in commands:
-                            interaction = command[0]
-                            interaction_type = command[1]
-                            interaction_args = command[2]
-                            match interaction_type:
-                                case "receiver":
-                                    self.handle_receiver_button()                               
-                                case "phonebook":
-                                    self.handle_phonebook_entry(interaction_args)
-                                case _:
-                                    self.gui.print_terminal("Unknown type?")
-                            time.sleep(self.config.get_by_key("interaction_timeout"))
-            except RuntimeError:  # race condition for set changing during iteration
+                for address in self.input_queue:
+                    match self.osc_bool_inputs.get(address)[0]:
+                        case "interaction":
+                            interaction_type = self.osc_bool_inputs.get(address)[1]
+                            interaction_args = self.osc_bool_inputs.get(address)[2]
+                            self.microsip.run_phone_command(interaction_type, interaction_args)
+                        case "menubutton":
+                            button_type = self.osc_bool_inputs.get(address)[1]
+                            button_timeout = time.time() + self.osc_bool_inputs.get(address)[2]
+                            self.menu.handle_button_input((address, button_type, button_timeout))
+                    self.input_queue.discard(address)
+            except RuntimeError:
                 pass
-            time.sleep(.05)
+            time.sleep(.025)
 
-    def on_collission_enter(self, address: str, *args) -> None:
-        if address in self.osc_input_parameters:
-            if len(args) != 1:
-                return
-            was_entered: bool = args[0]
-            if type(was_entered) != bool:
-                return
-            if was_entered:
-                self.active_interactions.add(address)
-            else:
-                self.active_interactions.discard(address)
+    def osc_collision(self, address: str, *args):
+        if address == self.avatar_change_input:
+            self.avatar_change()
+            return
+        if not self.is_paused:
+            if address in self.osc_bool_inputs:
+                if address in self.last_interactions and (self.last_interactions[address] + self.config.get_by_key("interaction_timeout")) > time.time():
+                    return
+                if len(args) != 1:
+                    return
+                was_entered: bool = args[0]
+                if type(was_entered) != bool:
+                    return
+                if was_entered and address not in self.input_queue:
+                    self.input_queue.add(address)
+                    self.last_interactions[address] = time.time()
 
-    def map_parameters(self, dispatcher: dispatcher.Dispatcher) -> None:
-        dispatcher.set_default_handler(self.on_collission_enter)
+    def microsip_callback(self, command: str, caller: str):
+        self.menu.handle_callback_input(command, caller)
 
-    def init(self) -> None:
-        self.gui.on_toggle_interaction_clicked.add_listener(
-            self.toggle_interactions)
+    def map_parameters(self, dispatcher: dispatcher.Dispatcher):
+        dispatcher.set_default_handler(self.osc_collision)
+
+    def avatar_change(self):
+        self.gui.print_terminal("Avatar change detected")
+        self.menu._redraw()
+
+    def run(self):
+        self.menu.init()
+        self.gui.on_toggle_interaction_clicked.add_listener(self.toggle_interactions)
+        threading.Thread(target=self._input_worker, daemon=True).start()
