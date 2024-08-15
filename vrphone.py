@@ -15,7 +15,8 @@ class VRPhone:
         self.osc_client = osc_client
         self.microsip = MicroSIP(config=self.config, gui=self.gui)
         self.menu = Menu(config=self.config, gui=self.gui, osc_client=self.osc_client, microsip=self.microsip)
-        self.input_queue: set = set()
+        self.osc_queue: set = set()
+        self.microsip_queue: set = set()
         self.last_interactions: dict = dict()
         self.is_paused = False
         self.avatar_change_input = params.avatar_change
@@ -47,17 +48,18 @@ class VRPhone:
     def _input_worker(self):
         while True:
             try:
-                for address in self.input_queue:
+                #Handle menu buttons & direct interaction commands
+                for address in self.osc_queue:
                     match self.osc_bool_inputs.get(address)[0]:
                         case "interaction":
-                            interaction_type = self.osc_bool_inputs.get(address)[1]
-                            interaction_args = self.osc_bool_inputs.get(address)[2]
-                            self.microsip.run_phone_command(interaction_type, interaction_args)
+                            self.microsip.run_phone_command(self.osc_bool_inputs.get(address)[1], self.osc_bool_inputs.get(address)[2])
                         case "menubutton":
-                            button_type = self.osc_bool_inputs.get(address)[1]
                             button_timeout = time.time() + self.osc_bool_inputs.get(address)[2]
-                            self.menu.handle_button_input((address, button_type, button_timeout))
-                    self.input_queue.discard(address)
+                            self.menu.handle_button_input((address, self.osc_bool_inputs.get(address)[1], button_timeout))        
+                    self.osc_queue.discard(address)
+                for command, caller in self.microsip_queue:
+                    self.menu.handle_callback_input(command, caller)
+                    self.microsip_queue.discard((command, caller))
             except RuntimeError:
                 pass
             time.sleep(.025)
@@ -75,12 +77,12 @@ class VRPhone:
                 was_entered: bool = args[0]
                 if type(was_entered) != bool:
                     return
-                if was_entered and address not in self.input_queue:
-                    self.input_queue.add(address)
+                if was_entered and address not in self.osc_queue:
+                    self.osc_queue.add(address)
                     self.last_interactions[address] = time.time()
 
     def microsip_callback(self, command: str, caller: str):
-        self.menu.handle_callback_input(command, caller)
+        self.microsip_queue.add((command, caller))
 
     def map_parameters(self, dispatcher: dispatcher.Dispatcher):
         dispatcher.set_default_handler(self.osc_collision)

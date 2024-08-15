@@ -105,6 +105,7 @@ class Menu:
                 pass
 
     def handle_button_input(self, button):
+        self.gui.print_terminal("log_verbose: Handle button input: {} active_mode: {}".format(button, self.active_mode)) if self.config.get_by_key("log_verbose") else None
         if self.active_mode == 0:
             if button[1] in self.config.get_by_key("phonemenu")["screens"][self.active_screen]["choices"]:
                 choice = self.config.get_by_key("phonemenu")["screens"][self.active_screen]["choices"][button[1]]
@@ -122,6 +123,11 @@ class Menu:
             return
             
     def handle_callback_input(self, command, caller):
+        #Loading transition mode, we don't accept input here
+        if self.active_mode == 2:
+            self.gui.print_terminal("log_verbose: Drop callback command: {} active_mode: {}".format(command, self.active_mode)) if self.config.get_by_key("log_verbose") else None
+            return
+        self.gui.print_terminal("log_verbose: Handle callback command: {} active_mode: {}".format(command, self.active_mode)) if self.config.get_by_key("log_verbose") else None
         match command:
             case "cmdCallEnd" | "cmdCallBusy":
                 self.gui.print_terminal("Call with #{} ended after {} seconds".format(caller,int(time.time() - self.call_start_time)))
