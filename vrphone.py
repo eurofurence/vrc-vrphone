@@ -17,7 +17,7 @@ class VRPhone:
         self.menu = Menu(config=self.config, gui=self.gui, osc_client=self.osc_client, microsip=self.microsip)
         self.osc_queue: set = set()
         self.microsip_queue: set = set()
-        self.last_interactions: dict = dict()
+        self.last_interaction = time.time() - self.config.get_by_key("interaction_timeout")
         self.is_paused = False
         self.avatar_change_input = params.avatar_change
         self.osc_bool_inputs: dict[str, tuple] = {
@@ -70,7 +70,7 @@ class VRPhone:
             return
         if not self.is_paused:
             if address in self.osc_bool_inputs:
-                if address in self.last_interactions and (self.last_interactions[address] + self.config.get_by_key("interaction_timeout")) > time.time():
+                if self.last_interaction + self.config.get_by_key("interaction_timeout") > time.time():
                     return
                 if len(args) != 1:
                     return
@@ -79,7 +79,7 @@ class VRPhone:
                     return
                 if was_entered and address not in self.osc_queue:
                     self.osc_queue.add(address)
-                    self.last_interactions[address] = time.time()
+                    self.last_interaction = time.time()
 
     def microsip_callback(self, command: str, caller: str):
         self.microsip_queue.add((command, caller))
