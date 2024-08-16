@@ -80,7 +80,11 @@ class Config:
                         },
                         "choices": {
                             "center_button": ["screen", "main"],
-                            "keypad_button": ["screen", "main"]
+                            "keypad_button": ["screen", "main"],
+                            "ok_button": ["screen", "main"],
+                            "cancel_button": ["screen", "main"],
+                            "yes_button": ["screen", "main"],
+                            "no_button": ["screen", "main"]
                         }
                     },
                     "main": {
