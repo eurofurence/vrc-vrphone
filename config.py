@@ -39,32 +39,33 @@ class Config:
                 "dialogs": {
                     "call_incoming":{
                         "dialog": 1,
-                        "popup": 2,
+                        "popup": 4,
                         "choices": {
                             "ok_button": ["call_accept", None],
-                            "cancel_button": ["call_hangup", None]
+                            "cancel_button": ["call_accept", None],
+                            "yes_button": ["call_hangup", None],
+                            "no_button": ["call_hangup", None]
                         }
                     },
                     "call_outgoing":{
                         "dialog": 2,
-                        "popup": 2,
+                        "popup": 1,
                         "choices": {
-                            "cancel_button": ["call_hangup", None]
+                            "yes_button": ["call_hangup", None],
+                            "no_button": ["call_hangup", None]
                         }
                     },
                     "call_ended":{
                         "dialog": 3,
                         "popup": 0,
-                        "choices": {
-                            "ok_button": ["screen", "main"],
-                            "cancel_button": ["screen", "main"]
-                        }
+                        "choices": {}
                     },
                     "call_started":{
                         "dialog": 4,
-                        "popup": 2,
+                        "popup": 1,
                         "choices": {
-                            "cancel_button": ["call_hangup", None]
+                            "yes_button": ["call_hangup", None],
+                            "no_button": ["call_hangup", None]
                         }
                     }
                 },
