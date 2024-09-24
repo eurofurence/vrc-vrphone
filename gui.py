@@ -1,6 +1,7 @@
 import params
 import config
 import webbrowser
+import os
 from event import Event
 import dearpygui.dearpygui as dpg
 from enum import Enum, auto
@@ -9,7 +10,6 @@ from time import gmtime, strftime
 
 class Element(Enum):
     MICROSIP_BINARY = auto()
-    CALL_AUTOANSWER = auto()
     PHONEBOOK = auto()
     PHONEBOOK_ENTRY_1_NAME = auto()
     PHONEBOOK_ENTRY_2_NAME = auto()
@@ -35,18 +35,17 @@ class Element(Enum):
     CONTRIBUTE_BUTTON = auto()
 
 class Gui:
-    def __init__(self, config: config.Config, window_width: int, window_height: int, logo_path: str):
+    def __init__(self, config: config.Config, window_width: int = 550, window_height: int = 1000):
         self.config = config
         self.sliders = []
         self.window_width = window_width
         self.window_height = window_height
-        self.logo_path = logo_path
+        self.logo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), './img/logo.png'))
         self.on_save_settings_clicked = Event()
         self.on_clear_console_clicked = Event()
         self.on_toggle_interaction_clicked = Event()
         self.elements = {
             Element.MICROSIP_BINARY: None,
-            Element.CALL_AUTOANSWER: None,
             Element.PHONEBOOK: None,
             Element.RECEIVER_BUTTON: None,
             Element.CALL_STARTED: None,
@@ -66,7 +65,6 @@ class Gui:
             Element.USE_OSCQUERY_CHECKBOX: "use_oscquery",
             Element.SERVER_PORT_NUMBER_INPUT: "server_port",
             Element.MICROSIP_BINARY: "microsip_binary",
-            Element.CALL_AUTOANSWER: "call_autoanswer",
             Element.INTERACTION_TIMEOUT: "interaction_timeout",
             "buttons": {
                 Element.RECEIVER_BUTTON: params.receiver_button,
@@ -187,11 +185,6 @@ class Gui:
                                 self.elements[element] = dpg.add_input_text(default_value=default_value, width=-1, callback=self.handle_phonebook_change)
             self.elements[Element.PHONEBOOK] = table
             
-    def create_call_autoanswer_checkbox(self):
-        call_autoanswer = self.config.get_by_key("call_autoanswer")
-        self.elements[Element.CALL_AUTOANSWER] = dpg.add_checkbox(
-            label="Automatically Accept Calls\n(Note: This is not MicroSIP's auto accept feature)", default_value=call_autoanswer, callback=self.handle_input_change)
-
     def create_server_port_input(self):
         server_port = self.config.get_by_key("server_port") or 9001
         dpg.add_text("Server Port Number (Omitted if OSCQuery is used)")
@@ -233,7 +226,6 @@ class Gui:
                 "logo", self.logo_path)
             dpg.add_spacer(height=20)
             self.create_microsip_binary_input()
-            self.create_call_autoanswer_checkbox()
             dpg.add_spacer(height=20)
             self.create_server_port_input()
             self.create_use_oscquery_checkbox()

@@ -18,14 +18,9 @@ class Config:
         microsip_binary = os.path.join(appdata_path, "MicroSIP\\microsip.exe")
         self.APP_NAME = 'VRChatVRPhone'
         self.default_config = {
-            "use_oscquery": False,
             "server_port": 9001,
             "microsip_binary": microsip_binary,
-            "call_autoanswer": False,
-            "callback_port": 19001,
-            "interaction_timeout": 2,
-            "max_call_time": 0,
-            "max_ring_time": 10,
+            "interaction_timeout": 3,
             "log_verbose": False,
             "phonebook":  [
                 ["Lobby", "5229"],

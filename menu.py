@@ -1,15 +1,16 @@
 from config import Config
 from gui import Gui
 from microsip import MicroSIP
+from osc import Osc
 import time
 import params
 
 class Menu:
-    def  __init__(self, config: Config, gui: Gui, osc_client, microsip: MicroSIP):
+    def  __init__(self, config: Config, gui: Gui, osc: Osc, microsip: MicroSIP):
         self.config = config
         self.gui = gui
         self.microsip = microsip
-        self.osc_client = osc_client
+        self.osc = osc
         self.active_screen: str = ""
         self.active_dialog: str = ""
         self.active_mode = 0
@@ -40,10 +41,10 @@ class Menu:
 
     def _reset_dialogs(self):
         self.active_mode = 0
-        self.osc_client.send_message(self.osc_integer_parameters.get("dialog"), 0)
-        self.osc_client.send_message(self.osc_integer_parameters.get("popup"), 0)
+        self.osc.osc_client.send_message(self.osc_integer_parameters.get("dialog"), 0)
+        self.osc.osc_client.send_message(self.osc_integer_parameters.get("popup"), 0)
         for selector in self.config.get_by_key("phonemenu")["screens"][self.active_screen]["selectors"]:
-            self.osc_client.send_message(
+            self.osc.osc_client.send_message(
                 self.osc_bool_parameters.get(selector),
                 self.config.get_by_key("phonemenu")["screens"][self.active_screen]["selectors"][selector]
                 )
@@ -52,14 +53,14 @@ class Menu:
         self.gui.print_terminal("log_verbose: Switching screen to: {}".format(screen)) if self.config.get_by_key("log_verbose") else None
         if self.config.get_by_key("phonemenu")["screens"][screen]["transition"]:
             self.active_mode = 2
-            self.osc_client.send_message(self.osc_integer_parameters.get("popup"), self.config.get_by_key("phonemenu")["transition_popup"])
+            self.osc.osc_client.send_message(self.osc_integer_parameters.get("popup"), self.config.get_by_key("phonemenu")["transition_popup"])
             time.sleep(self.config.get_by_key("interaction_timeout"))
-            self.osc_client.send_message(self.osc_integer_parameters.get("popup"), 0)
+            self.osc.osc_client.send_message(self.osc_integer_parameters.get("popup"), 0)
         self.active_screen = screen
         self.active_mode = 0
-        self.osc_client.send_message(self.osc_integer_parameters.get("screen"), self.config.get_by_key("phonemenu")["screens"][screen]["screenid"])
+        self.osc.osc_client.send_message(self.osc_integer_parameters.get("screen"), self.config.get_by_key("phonemenu")["screens"][screen]["screenid"])
         for selector in self.config.get_by_key("phonemenu")["screens"][screen]["selectors"]:
-            self.osc_client.send_message(
+            self.osc.osc_client.send_message(
                 self.osc_bool_parameters.get(selector),
                 self.config.get_by_key("phonemenu")["screens"][screen]["selectors"][selector]
                 )
@@ -68,28 +69,28 @@ class Menu:
         self.gui.print_terminal("log_verbose: Showing dialog: {}".format(dialog)) if self.config.get_by_key("log_verbose") else None
         self.active_dialog = dialog
         self.active_mode = 1
-        self.osc_client.send_message(self.osc_integer_parameters.get("dialog"), self.config.get_by_key("phonemenu")["dialogs"][dialog]["dialog"])
-        self.osc_client.send_message(self.osc_integer_parameters.get("popup"), self.config.get_by_key("phonemenu")["dialogs"][dialog]["popup"])
+        self.osc.osc_client.send_message(self.osc_integer_parameters.get("dialog"), self.config.get_by_key("phonemenu")["dialogs"][dialog]["dialog"])
+        self.osc.osc_client.send_message(self.osc_integer_parameters.get("popup"), self.config.get_by_key("phonemenu")["dialogs"][dialog]["popup"])
         for selector in self.config.get_by_key("phonemenu")["screens"][self.active_screen]["selectors"]:
-            self.osc_client.send_message(
+            self.osc.osc_client.send_message(
                 self.osc_bool_parameters.get(selector),
                 False
                 )
 
     def _redraw(self):
         self.gui.print_terminal("log_verbose: Redrawing screen") if self.config.get_by_key("log_verbose") else None
-        self.osc_client.send_message(self.osc_integer_parameters.get("screen"), self.config.get_by_key("phonemenu")["screens"][self.active_screen]["screenid"])
+        self.osc.osc_client.send_message(self.osc_integer_parameters.get("screen"), self.config.get_by_key("phonemenu")["screens"][self.active_screen]["screenid"])
         for selector in self.config.get_by_key("phonemenu")["screens"][self.active_screen]["selectors"]:
-            self.osc_client.send_message(
+            self.osc.osc_client.send_message(
                 self.osc_bool_parameters.get(selector),
                 self.config.get_by_key("phonemenu")["screens"][self.active_screen]["selectors"][selector]
                 )
         if self.active_mode == 1:
-            self.osc_client.send_message(self.osc_integer_parameters.get("dialog"), self.config.get_by_key("phonemenu")["dialogs"][self.active_dialog]["dialog"])
-            self.osc_client.send_message(self.osc_integer_parameters.get("popup"), self.config.get_by_key("phonemenu")["dialogs"][self.active_dialog]["popup"])
+            self.osc.osc_client.send_message(self.osc_integer_parameters.get("dialog"), self.config.get_by_key("phonemenu")["dialogs"][self.active_dialog]["dialog"])
+            self.osc.osc_client.send_message(self.osc_integer_parameters.get("popup"), self.config.get_by_key("phonemenu")["dialogs"][self.active_dialog]["popup"])
         if self.active_mode == 2:
-            self.osc_client.send_message(self.osc_integer_parameters.get("dialog"), 0)
-            self.osc_client.send_message(self.osc_integer_parameters.get("popup"), self.config.get_by_key("phonemenu")["transition_popup"])
+            self.osc.osc_client.send_message(self.osc_integer_parameters.get("dialog"), 0)
+            self.osc.osc_client.send_message(self.osc_integer_parameters.get("popup"), self.config.get_by_key("phonemenu")["transition_popup"])
 
     def _handle_choices(self, choice):
         match choice[0]:
