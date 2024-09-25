@@ -23,9 +23,9 @@ class Config:
             "interaction_timeout": 3,
             "log_verbose": False,
             "phonebook":  [
-                ["Lobby", "5229"],
-                ["Lobby2", "5230"],
-                ["Bark", "2275"],
+                ["Entry1", "5229"],
+                ["Entry2", "5230"],
+                ["Entry3", "2275"],
                 ["Conference", "1111"]
             ],
             "phonemenu": {
@@ -50,12 +50,12 @@ class Config:
                             "no_button": ["call_hangup", None]
                         }
                     },
-                    "call_ended":{
+                    "call_end":{
                         "dialog": 3,
                         "popup": 0,
                         "choices": {}
                     },
-                    "call_started":{
+                    "call_start":{
                         "dialog": 4,
                         "popup": 1,
                         "choices": {
@@ -65,32 +65,14 @@ class Config:
                     }
                 },
                 "screens": {
-                    "screensaver": {
-                        "screenid": 0,
+                    "main": {
+                        "screenid": 1,
                         "transition":  True,
                         "selectors": {
                             "selector1": False,
                             "selector2": False,
                             "selector3": False,
                             "selector4": False
-                        },
-                        "choices": {
-                            "center_button": ["screen", "main"],
-                            "keypad_button": ["screen", "main"],
-                            "ok_button": ["screen", "main"],
-                            "cancel_button": ["screen", "main"],
-                            "yes_button": ["screen", "main"],
-                            "no_button": ["screen", "main"]
-                        }
-                    },
-                    "main": {
-                        "screenid": 1,
-                        "transition":  True,
-                        "selectors": {
-                            "selector1": True,
-                            "selector2": False,
-                            "selector3": True,
-                            "selector4": True
                         },
                         "choices": {
                             "yes_button": ["screen", "credits"],
@@ -103,29 +85,15 @@ class Config:
                         "screenid": 2,
                         "transition":  True,
                         "selectors": {
-                            "selector1": True,
-                            "selector2": True,
-                            "selector3": True,
-                            "selector4": True
+                            "selector1": False,
+                            "selector2": False,
+                            "selector3": False,
+                            "selector4": False
                         },
                         "choices": {
                             "yes_button": ["call_phonebook", 0],
                             "no_button": ["call_phonebook", 1],
                             "ok_button": ["call_phonebook", 2],
-                            "cancel_button": ["screen", "main"]
-                        }
-                    },
-                    "conference": {
-                        "screenid": 3,
-                        "transition":  True,
-                        "selectors": {
-                            "selector1": False,
-                            "selector2": False,
-                            "selector3": True,
-                            "selector4": True
-                        },
-                        "choices": {
-                            "ok_button": ["call_phonebook", 3],
                             "cancel_button": ["screen", "main"]
                         }
                     },
@@ -136,20 +104,7 @@ class Config:
                             "selector1": False,
                             "selector2": False,
                             "selector3": False,
-                            "selector4": True
-                        },
-                        "choices": {
-                            "cancel_button": ["screen", "main"]
-                        }
-                    },
-                    "secretmenu": {
-                        "screenid": 5,
-                        "transition":  True,
-                        "selectors": {
-                            "selector1": False,
-                            "selector2": False,
-                            "selector3": False,
-                            "selector4": True
+                            "selector4": False
                         },
                         "choices": {
                             "cancel_button": ["screen", "main"]

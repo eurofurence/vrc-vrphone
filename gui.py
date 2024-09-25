@@ -7,7 +7,6 @@ import dearpygui.dearpygui as dpg
 from enum import Enum, auto
 from time import gmtime, strftime
 
-
 class Element(Enum):
     MICROSIP_BINARY = auto()
     PHONEBOOK = auto()
@@ -25,7 +24,6 @@ class Element(Enum):
     CALL_INCOMING = auto()
     CALL_ANSWERED_INCOMING = auto()
     INTERACTION_TIMEOUT = auto()
-    USE_OSCQUERY_CHECKBOX = auto()
     SERVER_PORT_NUMBER_INPUT = auto()
     TERMINAL_WINDOW_INPUT = auto()
     SAVE_SETTINGS_BUTTON = auto()
@@ -53,7 +51,6 @@ class Gui:
             Element.CALL_INCOMING: None,
             Element.CALL_ANSWERED_INCOMING: None,
             Element.INTERACTION_TIMEOUT: None,
-            Element.USE_OSCQUERY_CHECKBOX: None,
             Element.SERVER_PORT_NUMBER_INPUT: None,
             Element.TERMINAL_WINDOW_INPUT: None,
             Element.SAVE_SETTINGS_BUTTON: None,
@@ -62,13 +59,9 @@ class Gui:
             Element.CONTRIBUTE_BUTTON: None,
         }
         self.element_to_config_key = {
-            Element.USE_OSCQUERY_CHECKBOX: "use_oscquery",
             Element.SERVER_PORT_NUMBER_INPUT: "server_port",
             Element.MICROSIP_BINARY: "microsip_binary",
             Element.INTERACTION_TIMEOUT: "interaction_timeout",
-            "buttons": {
-                Element.RECEIVER_BUTTON: params.receiver_button,
-            }
         }
         self.phonebook_elements = [
                 {Element.PHONEBOOK_ENTRY_1_NAME: None, Element.PHONEBOOK_ENTRY_1_NUMBER: None},
@@ -76,12 +69,6 @@ class Gui:
                 {Element.PHONEBOOK_ENTRY_3_NAME: None, Element.PHONEBOOK_ENTRY_3_NUMBER: None},
                 {Element.PHONEBOOK_ENTRY_4_NAME: None, Element.PHONEBOOK_ENTRY_4_NUMBER: None},
         ]
-        self.parameter_to_button_element: dict[Element, str] = {
-            value: key for key, value in self.element_to_config_key.get('buttons').items()
-        }
-        self.button_labels: dict[Element, str] = {
-            Element.RECEIVER_BUTTON: "Receiver Button",
-        }
         self.ids_to_elements = None
 
     def handle_save_settings_callback(self):
@@ -187,14 +174,9 @@ class Gui:
             
     def create_server_port_input(self):
         server_port = self.config.get_by_key("server_port") or 9001
-        dpg.add_text("Server Port Number (Omitted if OSCQuery is used)")
+        dpg.add_text("Server Port Number")
         self.elements[Element.SERVER_PORT_NUMBER_INPUT] = dpg.add_input_int(default_value=server_port,
                                                                             width=-1, callback=self.handle_input_change)
-
-    def create_use_oscquery_checkbox(self):
-        use_oscquery = self.config.get_by_key("use_oscquery")
-        self.elements[Element.USE_OSCQUERY_CHECKBOX] = dpg.add_checkbox(
-            label="Use OSCQuery (Requires restart)", default_value=use_oscquery, callback=self.handle_input_change)
 
     def create_logs_output(self):
         dpg.add_text("Logs")
@@ -228,7 +210,6 @@ class Gui:
             self.create_microsip_binary_input()
             dpg.add_spacer(height=20)
             self.create_server_port_input()
-            self.create_use_oscquery_checkbox()
             dpg.add_spacer(height=20)
             self.create_interaction_timeout_input()
             dpg.add_spacer(height=20)
