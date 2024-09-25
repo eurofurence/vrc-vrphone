@@ -65,11 +65,10 @@ class Menu:
 
     def _switch_screen(self, screen):
         self.gui.print_terminal("log_verbose: Switching screen to: {}".format(screen)) if self.config.get_by_key("log_verbose") else None
-        if self.config.get_by_key("phonemenu")["screens"][screen]["transition"]:
-            self.active_mode = 2
-            self.osc.client.send_message(self.osc_integer_parameters.get("popup"), self.config.get_by_key("phonemenu")["transition_popup"])
-            time.sleep(self.config.get_by_key("interaction_timeout"))
-            self.osc.client.send_message(self.osc_integer_parameters.get("popup"), 0)
+        self.active_mode = 2
+        self.osc.client.send_message(self.osc_integer_parameters.get("popup"), self.config.get_by_key("phonemenu")["transition_popup"])
+        time.sleep(self.config.get_by_key("interaction_timeout"))
+        self.osc.client.send_message(self.osc_integer_parameters.get("popup"), 0)
         self.active_screen = screen
         self.active_mode = 0
         self.osc.client.send_message(self.osc_integer_parameters.get("screen"), self.config.get_by_key("phonemenu")["screens"][screen]["screenid"])
@@ -122,13 +121,16 @@ class Menu:
     def _input_worker(self):
         while True:
             try:
-                #Handle buttons
+                #Handle VRC queue
                 for address in self.osc_vrc_queue:
-                    self.handle_button_input((address, self.vrc_button_mapping.get(address)[1]))        
+                    if address == self.osc.avatar_change_input:
+                        self.handle_avatar_change()
+                    else:
+                        self.handle_button_input(self.vrc_button_mapping.get(address))        
                     self.osc_vrc_queue.discard(address)
-                #Handle callbacks
+                #Handle Microsip queue
                 for address, caller in self.osc_microsip_queue:
-                    self.handle_callback_input(address, caller)
+                    self.handle_callback_input(self.microsip_dialog_mapping.get(address), caller)
                     self.osc_microsip_queue.discard((address, caller))
             except RuntimeError:
                 pass
@@ -141,14 +143,14 @@ class Menu:
     def handle_button_input(self, button):
         self.gui.print_terminal("log_verbose: Handle button input: {} active_mode: {}".format(button, self.active_mode)) if self.config.get_by_key("log_verbose") else None
         if self.active_mode == 0:
-            if button[1] in self.config.get_by_key("phonemenu")["screens"][self.active_screen]["choices"]:
-                choice = self.config.get_by_key("phonemenu")["screens"][self.active_screen]["choices"][button[1]]
+            if button in self.config.get_by_key("phonemenu")["screens"][self.active_screen]["choices"]:
+                choice = self.config.get_by_key("phonemenu")["screens"][self.active_screen]["choices"][button]
                 self._handle_choices(choice)
             else:
                 return
         elif self.active_mode == 1:
-            if button[1] in self.config.get_by_key("phonemenu")["dialogs"][self.active_dialog]["choices"]:
-                choice = self.config.get_by_key("phonemenu")["dialogs"][self.active_dialog]["choices"][button[1]]
+            if button in self.config.get_by_key("phonemenu")["dialogs"][self.active_dialog]["choices"]:
+                choice = self.config.get_by_key("phonemenu")["dialogs"][self.active_dialog]["choices"][button]
                 self._handle_choices(choice)
             else:
                 return
@@ -156,9 +158,8 @@ class Menu:
             #Loading transition mode, we don't accept input here
             return
             
-    def handle_callback_input(self, address, caller):
-        command = self.microsip_dialog_mapping.get(address)        
-        self.gui.print_terminal("log_verbose: Handle callback address: {} command: {}, caller: {} active_mode: {}".format(address, command,  caller, self.active_mode)) if self.config.get_by_key("log_verbose") else None
+    def handle_callback_input(self, command, caller):        
+        self.gui.print_terminal("log_verbose: Handle callback command: {}, caller: {} active_mode: {}".format(command, caller, self.active_mode)) if self.config.get_by_key("log_verbose") else None
         match command:
             case "call_end" | "call_busy":
                 self.gui.print_terminal("Call with {} ended after {} seconds".format(caller,int(time.time() - self.call_start_time)))

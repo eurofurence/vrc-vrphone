@@ -18,6 +18,7 @@ class Config:
         microsip_binary = os.path.join(appdata_path, "MicroSIP\\microsip.exe")
         self.APP_NAME = 'VRChatVRPhone'
         self.default_config = {
+            "version": 1,
             "server_port": 9001,
             "microsip_binary": microsip_binary,
             "interaction_timeout": 3,
@@ -67,7 +68,6 @@ class Config:
                 "screens": {
                     "main": {
                         "screenid": 1,
-                        "transition":  True,
                         "selectors": {
                             "selector1": False,
                             "selector2": False,
@@ -83,7 +83,6 @@ class Config:
                     },
                     "phonebook": {
                         "screenid": 2,
-                        "transition":  True,
                         "selectors": {
                             "selector1": False,
                             "selector2": False,
@@ -99,7 +98,6 @@ class Config:
                     },
                     "credits": {
                         "screenid": 4,
-                        "transition":  True,
                         "selectors": {
                             "selector1": False,
                             "selector2": False,
