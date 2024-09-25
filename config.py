@@ -29,7 +29,7 @@ class Config:
                 ["Conference", "1111"]
             ],
             "phonemenu": {
-                "init_screen": "screensaver",
+                "init_screen": "main",
                 "transition_popup": 3,
                 "dialogs": {
                     "call_incoming":{
