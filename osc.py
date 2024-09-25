@@ -45,9 +45,9 @@ class Osc:
     def osc_handler(self, address: str, *args):
         if address in self.microsip_callback_adresses:
             if len(args) != 1:
-                caller = None
+                caller = "****"
             else:
-                caller = int(args[0])
+                caller = str(args[0])
             if address not in self.osc_microsip_queue:
                 self.osc_microsip_queue.add((address, caller))
                 return

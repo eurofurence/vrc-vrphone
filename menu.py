@@ -161,20 +161,20 @@ class Menu:
         self.gui.print_terminal("log_verbose: Handle callback address: {} command: {}, caller: {} active_mode: {}".format(address, command,  caller, self.active_mode)) if self.config.get_by_key("log_verbose") else None
         match command:
             case "call_end" | "call_busy":
-                self.gui.print_terminal("Call with #{} ended after {} seconds".format(caller,int(time.time() - self.call_start_time)))
+                self.gui.print_terminal("Call with {} ended after {} seconds".format(caller,int(time.time() - self.call_start_time)))
                 self._show_dialog("call_end")
                 time.sleep(self.config.get_by_key("interaction_timeout"))
                 self._reset_dialogs()
             case "call_outgoing":
                 self.call_start_time = time.time()
-                self.gui.print_terminal("Outgoing call to #{}".format(caller))
+                self.gui.print_terminal("Outgoing call to {}".format(caller))
                 self._show_dialog("call_outgoing")
             case "call_incoming":
                 self.call_start_time = time.time()
-                self.gui.print_terminal("Incoming call from #{}".format(caller))
+                self.gui.print_terminal("Incoming call from {}".format(caller))
                 self._show_dialog("call_incoming")
             case "call_start":
-                self.gui.print_terminal("Call with #{} started".format(caller))
+                self.gui.print_terminal("Call with {} started".format(caller))
                 self._show_dialog("call_start")
             case _:
                 self.gui.print_terminal("log_verbose: Unhandled callback command: {}".format(command)) if self.config.get_by_key("log_verbose") else None

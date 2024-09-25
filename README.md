@@ -4,27 +4,18 @@ Control Microsip using a VRC avatar!
 * Install Microsip for the local user
 * Setup Microsip settings for your Sip Account
 * Install Virtual Audio Cable and setup accordingly (VRChat Output > Microsip Input and vice versa)
-* Copy callback.ps1 to an appropriate location
+* Get a copy of sendosc for windows.
 
 * Edit Microsip.ini in your Appdata folder while Microsip is not running
 
-        cmdOutgoingCall=powershell "& ""C:\Users\lcbro\AppData\Roaming\MicroSIP\callback.ps1""" cmdOutgoingCall
-        cmdIncomingCall=powershell "& ""C:\Users\lcbro\AppData\Roaming\MicroSIP\callback.ps1""" cmdIncomingCall
-        cmdCallRing=powershell "& ""C:\Users\lcbro\AppData\Roaming\MicroSIP\callback.ps1""" cmdCallRing
-        cmdCallAnswer=powershell "& ""C:\Users\lcbro\AppData\Roaming\MicroSIP\callback.ps1""" cmdCallAnswer
-        cmdCallBusy=powershell "& ""C:\Users\lcbro\AppData\Roaming\MicroSIP\callback.ps1""" cmdCallBusy
-        cmdCallStart=powershell "& ""C:\Users\lcbro\AppData\Roaming\MicroSIP\callback.ps1""" cmdCallStart
-        cmdCallEnd=powershell "& ""C:\Users\lcbro\AppData\Roaming\MicroSIP\callback.ps1""" cmdCallEnd
 
-* Alternative using cygwin bash & curl
-
-      cmdOutgoingCall="C:\cygwin64\bin\bash.exe" -c '/bin/curl http://127.0.0.1:19001/"$0"/"$1"' cmdOutgoingCall
-      cmdIncomingCall="C:\cygwin64\bin\bash.exe" -c '/bin/curl http://127.0.0.1:19001/"$0"/"$1"' cmdIncomingCall
-      cmdCallRing="C:\cygwin64\bin\bash.exe" -c '/bin/curl http://127.0.0.1:19001/"$0"/"$1"' cmdCallRing
-      cmdCallAnswer="C:\cygwin64\bin\bash.exe" -c '/bin/curl http://127.0.0.1:19001/"$0"/"$1"' cmdCallAnswer
-      cmdCallBusy="C:\cygwin64\bin\bash.exe" -c '/bin/curl http://127.0.0.1:19001/"$0"/"$1"' cmdCallBusy
-      cmdCallStart="C:\cygwin64\bin\bash.exe" -c '/bin/curl http://127.0.0.1:19001/"$0"/"$1"' cmdCallStart
-      cmdCallEnd="C:\cygwin64\bin\bash.exe" -c '/bin/curl http://127.0.0.1:19001/"$0"/"$1"' cmdCallEnd
+        cmdOutgoingCall="C:\Users\vrphone\Desktop\VRC VR Phone\sendosc.exe" 127.0.0.1 9001 /microsip/command/cmdOutgoingCall s
+        cmdIncomingCall="C:\Users\vrphone\Desktop\VRC VR Phone\sendosc.exe" 127.0.0.1 9001 /microsip/command/cmdIncomingCall s
+        cmdCallRing="C:\Users\vrphone\Desktop\VRC VR Phone\sendosc.exe" 127.0.0.1 9001 /microsip/command/cmdCallRing s
+        cmdCallAnswer="C:\Users\vrphone\Desktop\VRC VR Phone\sendosc.exe" 127.0.0.1 9001 /microsip/command/cmdCallAnswer s
+        cmdCallBusy="C:\Users\vrphone\Desktop\VRC VR Phone\sendosc.exe" 127.0.0.1 9001 /microsip/command/cmdCallBusy s
+        cmdCallStart="C:\Users\vrphone\Desktop\VRC VR Phone\sendosc.exe" 127.0.0.1 9001 /microsip/command/cmdCallStart s
+        cmdCallEnd="C:\Users\vrphone\Desktop\VRC VR Phone\sendosc.exe" 127.0.0.1 9001 /microsip/command/cmdCallEnd s
 
 * Start Microsip again
 * Start VRPhone App
