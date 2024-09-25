@@ -29,7 +29,7 @@ class Menu:
             "selector3": params.show_selection3,
             "selector4": params.show_selection4
         }
-        self.microsip_dialog_mapping: dict[str, tuple] = {
+        self.microsip_dialog_mapping: dict[str, str] = {
             params.microsip_call_outgoing: "call_outgoing",
             params.microsip_call_incoming: "call_incoming",
             params.microsip_call_ring: "call_ring",
