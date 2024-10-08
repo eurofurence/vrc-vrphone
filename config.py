@@ -37,6 +37,10 @@ class Config:
                         "dialog": 1,
                         "window": 2,
                         "popup": 0,
+                        "numbers": {
+                            "row1": "callerid",
+                            "row2": None
+                        },
                         "choices": {
                             "yes_button": ["call_accept", None],
                             "no_button": ["call_hangup", None]
@@ -46,6 +50,10 @@ class Config:
                         "dialog": 2,
                         "window": 2,
                         "popup": 0,
+                        "numbers": {
+                            "row1": "callerid",
+                            "row2": None
+                        },
                         "choices": {
                             "no_button": ["call_hangup", None]
                         }
@@ -54,6 +62,10 @@ class Config:
                         "dialog": 3,
                         "window": 2,
                         "popup": 0,
+                        "numbers": {
+                            "row1": "phonebook",
+                            "row2": None
+                        },
                         "choices": {
                             "yes_button": ["phonebook_call_active_entry", None],
                             "no_button": ["exit_dialogs", None]
@@ -63,12 +75,20 @@ class Config:
                         "dialog": 5,
                         "window": 2,
                         "popup": 0,
+                        "numbers": {
+                            "row1": "callerid",
+                            "row2": "calltimer"
+                        },
                         "choices": {}
                     },
                     "call_start":{
                         "dialog": 4,
                         "window": 2,
                         "popup": 0,
+                        "numbers": {
+                            "row1": "callerid",
+                            "row2": "calltimer"
+                        },
                         "choices": {
                             "no_button": ["call_hangup", None]
                         }
@@ -79,6 +99,10 @@ class Config:
                         "screenid": 1,
                         "window": 0,
                         "popup": 0,
+                        "numbers": {
+                            "row1": None,
+                            "row2": None
+                        },
                         "selectors": {},
                         "choices": {
                             "yes_button": ["screen", "phonebook"]
@@ -88,21 +112,16 @@ class Config:
                         "screenid": 2,
                         "window": 0,
                         "popup": 0,
+                        "numbers": {
+                            "row1": "phonebook",
+                            "row2": "entry"
+                        },
                         "selectors": {},
                         "choices": {
                             "yes_button": ["phonebook_call_confirm_dialog", None],
                             "no_button": ["screen", "main"],
-                            "ok_button": ["phonebook_next", None],
-                            "cancel_button": ["phonebook_prev", None]
-                        }
-                    },
-                    "credits": {
-                        "screenid": 1,
-                        "window": 1,
-                        "popup": 0,
-                        "selectors": {},
-                        "choices": {
-                            "cancel_button": ["screen", "main"]
+                            "ok_button": ["phonebook_switch", "next"],
+                            "cancel_button": ["phonebook_switch", "prev"]
                         }
                     }
                 }

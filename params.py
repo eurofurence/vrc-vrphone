@@ -43,3 +43,9 @@ show_numberRow2Slot1 = "/avatar/parameters/NumberRow2Slot1"
 show_numberRow2Slot2 = "/avatar/parameters/NumberRow2Slot2"
 show_numberRow2Slot3 = "/avatar/parameters/NumberRow2Slot3"
 show_numberRow2Slot4 = "/avatar/parameters/NumberRow2Slot4"
+
+#Delimiter Row 1
+show_delimiterRow1 = "/avatar/parameters/DelimiterRow1"
+
+#Delimiter Row 2
+show_delimiterRow2 = "/avatar/parameters/DelimiterRow2"
