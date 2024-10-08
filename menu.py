@@ -20,6 +20,7 @@ class Menu:
         self.active_phonebook_entry: int = 0
         self.call_start_time: float = 0
         self.callerid: str = ""
+        self.update_timer: int = int(time.time())
         self.osc_integer_parameters: dict[str, str] = {
             "screen": params.active_screen,
             "window": params.active_window,
@@ -72,6 +73,8 @@ class Menu:
         self.osc.client.send_message(self.osc_integer_parameters.get("dialog"), 0)
         self.osc.client.send_message(self.osc_integer_parameters.get("popup"), 0)
         self.osc.client.send_message(self.osc_integer_parameters.get("window"), self.config.get_by_key("phonemenu")["screens"][self.active_screen]["window"])
+        self._handle_numbers("row1", self.config.get_by_key("phonemenu")["screens"][self.active_screen]["numbers"]["row1"])
+        self._handle_numbers("row2", self.config.get_by_key("phonemenu")["screens"][self.active_screen]["numbers"]["row2"])
         for selector in self.config.get_by_key("phonemenu")["screens"][self.active_screen]["selectors"]:
             self.osc.client.send_message(
                 self.osc_bool_parameters.get(selector),
@@ -145,6 +148,8 @@ class Menu:
                 self._phonebook_switch_entry(choice[1])
             case "phonebook_call_active_entry":
                 self.microsip.run_phone_command("phonebook", self.active_phonebook_entry)
+            case "dialog":
+                self._show_dialog(choice[1])
             case "exit_dialogs":
                 self._reset_dialogs()
             case _:
@@ -175,7 +180,10 @@ class Menu:
         self.callerid = caller
         match command:
             case "call_end" | "call_busy":
-                self.gui.print_terminal("Call with {} ended after {} seconds".format(caller,int(time.time() - self.call_start_time)))
+                if self.call_start_time > 0:
+                    self.gui.print_terminal("Call with {} ended after {} seconds".format(caller,int(time.time() - self.call_start_time)))
+                else:
+                    self.gui.print_terminal("Call with {} ended due to busy signal".format(caller))
                 self._show_dialog("call_end")
                 time.sleep(self.config.get_by_key("interaction_timeout"))
                 self._reset_dialogs()
@@ -229,14 +237,17 @@ class Menu:
             case "callerid":
                 self._show_number_field(row, self.callerid)
             case "calltimer":
-                self._show_number_field(row, str(int(time.time() - self.call_start_time)))
+                if self.call_start_time > 0:
+                    timestring = time.strftime("%M%S", time.gmtime(time.time() - self.call_start_time))
+                else:
+                    timestring = "0000"
+                self._show_number_field(row, timestring, delimiter = True)
             case "systemtime":
-                self._show_number_field(row, "1337")
+                self._show_number_field(row, time.strftime("%H%M", time.localtime()), delimiter = True)
             case _:
                 self._hide_number_field(row)
-        self.gui.print_terminal("log_verbose: Handled number type: {} for row: {}".format(number_type, row)) if self.config.get_by_key("log_verbose") else None
 
-    def _show_number_field(self, row, number):
+    def _show_number_field(self, row, number, delimiter: bool = False):
         digitlist = list()
         for digit in "{s:{c}^{n}}".format(s = number, n = 4, c = "X"):
             match digit:
@@ -254,11 +265,19 @@ class Menu:
                 self.osc.client.send_message(params.show_numberRow1Slot2, digitlist[1])
                 self.osc.client.send_message(params.show_numberRow1Slot3, digitlist[2])
                 self.osc.client.send_message(params.show_numberRow1Slot4, digitlist[3])
+                if delimiter:
+                    self.osc.client.send_message(params.show_delimiterRow1, True)
+                else:
+                    self.osc.client.send_message(params.show_delimiterRow1, False)
             case "row2":
                 self.osc.client.send_message(params.show_numberRow2Slot1, digitlist[0])
                 self.osc.client.send_message(params.show_numberRow2Slot2, digitlist[1])
                 self.osc.client.send_message(params.show_numberRow2Slot3, digitlist[2])
                 self.osc.client.send_message(params.show_numberRow2Slot4, digitlist[3])
+                if delimiter:
+                    self.osc.client.send_message(params.show_delimiterRow2, True)
+                else:
+                    self.osc.client.send_message(params.show_delimiterRow2, False)
 
     def _hide_number_field(self, row):
         match row:
@@ -267,11 +286,13 @@ class Menu:
                 self.osc.client.send_message(params.show_numberRow1Slot2, 255)
                 self.osc.client.send_message(params.show_numberRow1Slot3, 255)
                 self.osc.client.send_message(params.show_numberRow1Slot4, 255)
+                self.osc.client.send_message(params.show_delimiterRow1, False)
             case "row2":
                 self.osc.client.send_message(params.show_numberRow2Slot1, 255)
                 self.osc.client.send_message(params.show_numberRow2Slot2, 255)
                 self.osc.client.send_message(params.show_numberRow2Slot3, 255)
                 self.osc.client.send_message(params.show_numberRow2Slot4, 255)
+                self.osc.client.send_message(params.show_delimiterRow2, False)
 
     def _update_timers(self):
         match self.active_mode:
@@ -303,8 +324,10 @@ class Menu:
                     self._handle_callback_input(self.microsip_dialog_mapping.get(address), caller)
                     self.osc_microsip_queue.discard((address, caller))
                 #Handle call timer
-                if self.call_start_time is not float(0):
+                looptime = int(time.time())
+                if (looptime - self.update_timer) >=1:
                     self._update_timers()
+                    self.update_timer = looptime
             except RuntimeError:
                 pass
             time.sleep(.025)

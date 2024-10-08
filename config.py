@@ -101,7 +101,7 @@ class Config:
                         "popup": 0,
                         "numbers": {
                             "row1": None,
-                            "row2": None
+                            "row2": "systemtime"
                         },
                         "selectors": {},
                         "choices": {
@@ -118,7 +118,7 @@ class Config:
                         },
                         "selectors": {},
                         "choices": {
-                            "yes_button": ["phonebook_call_confirm_dialog", None],
+                            "yes_button": ["dialog", "call_confirm"],
                             "no_button": ["screen", "main"],
                             "ok_button": ["phonebook_switch", "next"],
                             "cancel_button": ["phonebook_switch", "prev"]

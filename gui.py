@@ -73,6 +73,7 @@ class Gui:
 
     def handle_save_settings_callback(self):
         self.config.write_config_to_disk()
+        self.on_save_settings_clicked.dispatch()
         self.print_terminal("Settings Saved!")
 
     def handle_clear_console_callback(self, sender, app_data):
