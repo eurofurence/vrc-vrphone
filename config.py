@@ -21,7 +21,7 @@ class Config:
             "version": 1,
             "server_port": 9001,
             "microsip_binary": microsip_binary,
-            "interaction_timeout": 3,
+            "interaction_timeout": 2,
             "log_verbose": False,
             "phonebook":  [
                 ["Entry1", "5229"],
