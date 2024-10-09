@@ -21,7 +21,7 @@ class Config:
             "version": 1,
             "server_port": 9001,
             "microsip_binary": microsip_binary,
-            "interaction_timeout": 3,
+            "interaction_timeout": 2,
             "log_verbose": False,
             "phonebook":  [
                 ["Entry1", "5229"],
@@ -31,36 +31,65 @@ class Config:
             ],
             "phonemenu": {
                 "init_screen": "main",
-                "transition_popup": 3,
+                "transition_popup": 1,
                 "dialogs": {
                     "call_incoming":{
                         "dialog": 1,
-                        "popup": 4,
+                        "window": 2,
+                        "popup": 0,
+                        "numbers": {
+                            "row1": "callerid",
+                            "row2": None
+                        },
                         "choices": {
-                            "ok_button": ["call_accept", None],
-                            "cancel_button": ["call_accept", None],
-                            "yes_button": ["call_hangup", None],
+                            "yes_button": ["call_accept", None],
                             "no_button": ["call_hangup", None]
                         }
                     },
                     "call_outgoing":{
                         "dialog": 2,
-                        "popup": 1,
+                        "window": 2,
+                        "popup": 0,
+                        "numbers": {
+                            "row1": "callerid",
+                            "row2": None
+                        },
                         "choices": {
-                            "yes_button": ["call_hangup", None],
                             "no_button": ["call_hangup", None]
                         }
                     },
-                    "call_end":{
+                    "call_confirm":{
                         "dialog": 3,
+                        "window": 2,
                         "popup": 0,
+                        "numbers": {
+                            "row1": "phonebook",
+                            "row2": None
+                        },
+                        "choices": {
+                            "yes_button": ["phonebook_call_active_entry", None],
+                            "no_button": ["exit_dialogs", None]
+                        }
+                    },
+                    "call_end":{
+                        "dialog": 5,
+                        "window": 2,
+                        "popup": 0,
+                        "numbers": {
+                            "row1": "callerid",
+                            "row2": "calltimer"
+                        },
                         "choices": {}
                     },
                     "call_start":{
                         "dialog": 4,
-                        "popup": 1,
+                        "window": 2,
+                        "popup": 0,
+                        "numbers": {
+                            "row1": "callerid",
+                            "row2": "calltimer"
+                        },
                         "choices": {
-                            "yes_button": ["call_hangup", None],
                             "no_button": ["call_hangup", None]
                         }
                     }
@@ -68,44 +97,31 @@ class Config:
                 "screens": {
                     "main": {
                         "screenid": 1,
-                        "selectors": {
-                            "selector1": False,
-                            "selector2": False,
-                            "selector3": False,
-                            "selector4": False
+                        "window": 0,
+                        "popup": 0,
+                        "numbers": {
+                            "row1": None,
+                            "row2": "systemtime"
                         },
+                        "selectors": {},
                         "choices": {
-                            "yes_button": ["screen", "credits"],
-                            "no_button": ["screen", "secretmenu"],
-                            "ok_button": ["screen", "phonebook"],
-                            "cancel_button": ["screen", "conference"]
+                            "yes_button": ["screen", "phonebook"]
                         }
                     },
                     "phonebook": {
                         "screenid": 2,
-                        "selectors": {
-                            "selector1": False,
-                            "selector2": False,
-                            "selector3": False,
-                            "selector4": False
+                        "window": 0,
+                        "popup": 0,
+                        "numbers": {
+                            "row1": "phonebook",
+                            "row2": "entry"
                         },
+                        "selectors": {},
                         "choices": {
-                            "yes_button": ["call_phonebook", 0],
-                            "no_button": ["call_phonebook", 1],
-                            "ok_button": ["call_phonebook", 2],
-                            "cancel_button": ["screen", "main"]
-                        }
-                    },
-                    "credits": {
-                        "screenid": 4,
-                        "selectors": {
-                            "selector1": False,
-                            "selector2": False,
-                            "selector3": False,
-                            "selector4": False
-                        },
-                        "choices": {
-                            "cancel_button": ["screen", "main"]
+                            "yes_button": ["dialog", "call_confirm"],
+                            "no_button": ["screen", "main"],
+                            "ok_button": ["phonebook_switch", "next"],
+                            "cancel_button": ["phonebook_switch", "prev"]
                         }
                     }
                 }

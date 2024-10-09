@@ -18,3 +18,4 @@ class VRPhone:
         self.menu.run()
         self.osc.run()
         self.gui.on_toggle_interaction_clicked.add_listener(self.osc.toggle_interactions)
+        self.gui.on_save_settings_clicked.add_listener(self.menu._redraw)

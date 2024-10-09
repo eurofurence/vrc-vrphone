@@ -16,12 +16,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.10.9
+          python-version: 3.12.7
 
       - name: Install Python dependencies
         run: |
@@ -32,7 +32,7 @@ jobs:
         run: pyinstaller --hidden-import zeroconf._utils.ipaddress --hidden-import zeroconf._handlers.answers --hidden-import=clr --add-data "./img/logo.png;img" --noconsole --onefile --distpath ./build --name=vrc-vrphone main.py
 
       - name: Deploy EXE
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: vrc-vrphone
           path: ./build/vrc-vrphone.exe
@@ -45,9 +45,9 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: vrc-vrphone
           path: artifact/vrc-vrphone

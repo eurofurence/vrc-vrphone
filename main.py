@@ -16,5 +16,5 @@ except KeyboardInterrupt:
 except OSError:
     pass
 finally:
-    if vrphone.gui is not None:
-        vrphone.gui.cleanup()
+    if gui is not None:
+        gui.cleanup()
