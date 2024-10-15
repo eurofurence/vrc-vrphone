@@ -19,7 +19,7 @@ Control Microsip using a VRC avatar!
 
 * Start Microsip again
 * Start VRPhone App
-* Clone a public [VR Phone Public Avatar](https://vrchat.com/home/avatar/avtr_50a1bfbf-c64a-41bf-ae96-9a5a30cfebba) or upload your own!
+* Clone the [VR Phone Public Avatar](https://vrchat.com/home/avatar/avtr_50a1bfbf-c64a-41bf-ae96-9a5a30cfebba) or upload your own!
 
 # Disclaimer
 
